@@ -6,7 +6,6 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import UserManagement from './pages/admin/UserManagement';
 import BrandingSettings from './pages/admin/BrandingSettings';
-
 // 2. Import ang Pages
 import Login from './pages/auth/Login';
 
