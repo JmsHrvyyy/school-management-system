@@ -105,11 +105,11 @@ const UserManagement = () => {
             setFormData({username:'', password:'', full_name:'', email: '', role:'registrar'}); 
             setShowModal(true); 
           }}
-          className="group text-white px-5 py-2.5 rounded-xl flex items-center space-x-2 shadow-lg transition-all duration-200 active:scale-95"
+          className="shine-effect group text-white px-6 py-3 rounded-2xl flex items-center space-x-2 shadow-xl shadow-blue-200 transition-all duration-300 active:scale-95 border border-white/20"
           style={{ backgroundColor: branding.theme_color || '#2563eb' }}
         >
-          <UserPlus size={18} />
-          <span className="font-bold text-sm">Add New User</span>
+          <UserPlus size={20} className="group-hover:rotate-12 transition-transform" />
+          <span className="font-bold text-sm tracking-tight">Add New User</span>
         </button>
       </div>
 
