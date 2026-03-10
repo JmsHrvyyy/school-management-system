@@ -211,6 +211,17 @@ const openEditModal = (user) => {
                   onChange={(e) => setFormData({...formData, full_name: e.target.value})}
                 />
               </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase">Email Address</label>
+                <input 
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="w-full p-3 border border-slate-200 rounded-xl"
+                  placeholder="juandelacruz@school.edu.ph"
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Username</label>
