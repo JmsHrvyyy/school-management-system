@@ -4,17 +4,16 @@ import axios from 'axios';
 import { Lock, User, Eye, EyeOff, ShieldCheck, Loader2, GraduationCap, Users, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const Login = ({ portal }) => { // Tinatanggap ang 'portal' prop mula sa App.jsx
+const Login = ({ portal }) => {
   const navigate = useNavigate();
   const { setUser, branding } = useAuth();
 
-  const [identifier, setIdentifier] = useState(''); // Username or Student ID
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 1. Dynamic Settings base sa Portal
   const portalConfig = {
     admin: {
       title: 'Admin Portal',
@@ -34,7 +33,7 @@ const Login = ({ portal }) => { // Tinatanggap ang 'portal' prop mula sa App.jsx
       title: 'Student Portal',
       label: 'Student ID Number',
       icon: <GraduationCap size={40} />,
-      bgColor: '#059669', // Emerald color para sa Students
+      bgColor: '#059669',
       description: 'Access your grades and school records'
     }
   };
@@ -50,14 +49,13 @@ const Login = ({ portal }) => { // Tinatanggap ang 'portal' prop mula sa App.jsx
       const response = await axios.post('http://localhost/sms-api/login.php', {
         username: identifier,
         password: password,
-        portal: portal // Ipinapasa sa PHP para sa security check
+        portal: portal
       });
 
       if (response.data.success) {
         localStorage.setItem('user', JSON.stringify(response.data.user));
         setUser(response.data.user); 
         
-        // I-redirect base sa role at portal
         const role = response.data.user.role;
         navigate(`/${role}/dashboard`);
       } else {
@@ -73,7 +71,6 @@ const Login = ({ portal }) => { // Tinatanggap ang 'portal' prop mula sa App.jsx
   return (
     <div className="min-h-screen w-full bg-slate-50 flex flex-col items-center justify-center p-4 font-sans">
       
-      {/* Back to Landing Page Button */}
       <button 
         onClick={() => navigate('/')}
         className="mb-8 flex items-center space-x-2 text-slate-400 hover:text-slate-600 font-bold text-[10px] uppercase tracking-widest transition-all"
@@ -84,7 +81,6 @@ const Login = ({ portal }) => { // Tinatanggap ang 'portal' prop mula sa App.jsx
 
       <div className="max-w-md w-full">
         
-        {/* Header Section */}
         <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="inline-flex items-center justify-center mb-4">
             <div 
@@ -102,14 +98,11 @@ const Login = ({ portal }) => { // Tinatanggap ang 'portal' prop mula sa App.jsx
           </p>
         </div>
 
-        {/* Login Card */}
         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200 border border-slate-100 p-8 md:p-10 relative overflow-hidden">
-          {/* Subtle Accent Line */}
           <div className="absolute top-0 left-0 w-full h-1.5" style={{ backgroundColor: portal === 'admin' ? '#1e293b' : (portal === 'student' ? '#059669' : (branding.theme_color || '#2563eb')) }}></div>
           
           <form className="space-y-6" onSubmit={handleLogin}>
             
-            {/* Identifier Input */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">{current.label}</label>
               <div className="relative group">
@@ -126,7 +119,6 @@ const Login = ({ portal }) => { // Tinatanggap ang 'portal' prop mula sa App.jsx
               </div>
             </div>
 
-            {/* Password Input */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Password</label>
               <div className="relative group">
@@ -176,17 +168,18 @@ const Login = ({ portal }) => { // Tinatanggap ang 'portal' prop mula sa App.jsx
               )}
             </button>
           </form>
-            {/* DITO MO IDADAGDAG ANG FORGOT PASSWORD BUTTON */}
-                      <div className="mt-6 text-center animate-in fade-in duration-500">
-                        <button 
-                          type="button" 
-                          onClick={() => navigate('/forgot-password')}
-                          className="text-[10px] font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest relative group inline-flex flex-col items-center"
-                        >
-                          <span>Forgot Password?</span>
-                          <span className="w-0 h-[1px] bg-blue-600 group-hover:w-full transition-all duration-300 mt-0.5"></span>
-                        </button>
-                      </div>
+
+          {/* FORGOT PASSWORD BUTTON - Inilabas na sa form */}
+          <div className="mt-6 text-center animate-in fade-in duration-500">
+            <button 
+              type="button" 
+              onClick={() => navigate('/forgot-password')}
+              className="text-[10px] font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest relative group inline-flex flex-col items-center"
+            >
+              <span>Forgot Password?</span>
+              <span className="w-0 h-[1px] bg-blue-600 group-hover:w-full transition-all duration-300 mt-0.5"></span>
+            </button>
+          </div>
 
         </div>
 

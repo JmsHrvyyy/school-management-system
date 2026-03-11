@@ -7,12 +7,14 @@ import SetupPassword from './pages/auth/SetupPassword'; // O kung saan mo man si
 import ForgotPassword from './pages/auth/ForgotPassword'; // <-- Siguraduhin na tama ang path
 import ResetPassword from './pages/auth/ResetPassword';
 import StudentManagement from './pages/registrar/StudentManagement'; // (Palitan path depende sa kung saan mo sinave)
+import StudentDashboard from './pages/student/StudentDashboard';
+
 
 // Layouts
 import AdminLayout from './layouts/AdminLayout';
 
 // Pages
-import LandingPage from './pages/LandingPage'; // Ang bagong "Front Door"
+import LandingPage from './pages/landingpage'; // Ang bagong "Front Door"
 import Login from './pages/auth/Login';
 import UserManagement from './pages/admin/UserManagement';
 import BrandingSettings from './pages/admin/BrandingSettings';
@@ -58,6 +60,12 @@ function App() {
           <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
 
           <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+
+          {/* Kung gumagamit ka ng ProtectedRoute, ganito: */}
+          <Route path="/student/dashboard" element={<ProtectedRoute allowedRoles={['student']}><StudentDashboard /></ProtectedRoute>} />
+
+{/* O kung basic Route lang muna: */}
+{/* <Route path="/student/dashboard" element={<StudentDashboard />} /> */}
 
           <Route path="/unauthorized" element={<Unauthorized />} />
           
