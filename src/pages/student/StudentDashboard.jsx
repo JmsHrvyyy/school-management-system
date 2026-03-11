@@ -1,19 +1,10 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-// Optional: Import icons from a library like lucide-react or heroicons
-// import { BookOpen, CreditCard, User, ClipboardList, LogOut } from 'lucide-react';
 
 const StudentDashboard = () => {
   const { user, logout, branding } = useAuth();
   const navigate = useNavigate();
-
-  // Architecture Note: This data would eventually come from your PHP RESTful API [cite: 8, 19]
-  const studentData = {
-    enrollmentStatus: "Enrolled",
-    paymentStatus: "Paid", // If "Unpaid", LMS access should be restricted 
-    currentGPA: "1.25"
-  };
 
   const handleLogout = () => {
     logout();
@@ -22,92 +13,94 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Top Navigation / Header */}
-      <nav className="bg-white shadow-sm border-b px-8 py-4 flex justify-between items-center">
+      {/* TOP NAVIGATION BAR */}
+      <nav className="bg-white shadow-sm border-b px-6 py-3 flex justify-between items-center sticky top-0 z-50">
+        
+        {/* TOP LEFT: Logo and School Name */}
         <div className="flex items-center gap-3">
-          {/* Dynamic Branding: Implementation of Phase 3 [cite: 27] */}
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-            {branding?.logoInitial || 'S'}
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center overflow-hidden shadow-inner">
+            {branding?.logoUrl ? (
+              <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white font-black text-xl">
+                {branding?.schoolName?.charAt(0) || 'S'}
+              </span>
+            )}
           </div>
-          <h2 className="text-xl font-bold text-slate-800">SMS Portal</h2>
+          <div className="flex flex-col">
+            <h2 className="text-lg font-black text-slate-800 leading-tight tracking-tight">
+              {branding?.schoolName || 'SCHOOL MANAGEMENT SYSTEM'}
+            </h2>
+            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em]">
+              Student Portal
+            </span>
+          </div>
         </div>
-        <button 
-          onClick={handleLogout}
-          className="flex items-center gap-2 text-slate-500 hover:text-red-600 font-medium transition-colors"
-        >
-          <span>Log Out</span>
-        </button>
+
+        {/* TOP RIGHT: User Profile & Logout */}
+        <div className="flex items-center gap-4 border-l pl-4">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-bold text-slate-800 leading-none">
+              {user?.full_name || 'Student Name'}
+            </p>
+            <p className="text-[11px] text-slate-500 font-medium">
+              {user?.student_id || '2024-0001'}
+            </p>
+          </div>
+          
+          <button 
+            onClick={handleLogout}
+            className="group relative flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-red-50 transition-all duration-300"
+            title="Logout"
+          >
+            {/* User Icon Design */}
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-5 w-5 text-slate-600 group-hover:text-red-600" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            
+            {/* Logout Overlay Indicator */}
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-red-500 border-2 border-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+               <span className="text-[8px] text-white">✕</span>
+            </div>
+          </button>
+        </div>
       </nav>
 
-      <main className="p-8 max-w-7xl mx-auto w-full">
-        {/* Welcome Section */}
-        <header className="mb-10">
-          <h1 className="text-4xl font-black text-slate-900 mb-2">
-            Mabuhay, {user?.full_name || 'Student'}! 👋
+      {/* MAIN CONTENT AREA */}
+      <main className="p-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
+        <header className="mb-8">
+          <h1 className="text-3xl font-black text-slate-900">
+            Welcome back, <span className="text-blue-600">{user?.full_name?.split(' ')[0] || 'Student'}</span>!
           </h1>
-          <p className="text-slate-500">Welcome back to your academic overview.</p>
+          <p className="text-slate-500 mt-1">Here is what's happening with your campus life today.</p>
         </header>
 
-        {/* Quick Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <StatCard title="Enrollment Status" value={studentData.enrollmentStatus} color="text-green-600" />
-          <StatCard title="Payment Status" value={studentData.paymentStatus} color="text-blue-600" />
-          <StatCard title="Current GWA" value={studentData.currentGPA} color="text-purple-600" />
-        </div>
-
-        {/* Module Selection Grid - Connecting the Core Functionalities  */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MenuCard 
-            title="LMS" 
-            desc="Access modules & assignments" 
-            icon="📚" 
-            onClick={() => navigate('/lms')}
-            disabled={studentData.paymentStatus !== "Paid"} // Logic from Phase 2 [cite: 23]
-          />
-          <MenuCard 
-            title="Enrollment" 
-            desc="Register for new subjects" 
-            icon="📝" 
-            onClick={() => navigate('/enrollment')} 
-          />
-          <MenuCard 
-            title="Grades & Schedule" 
-            desc="View academic records" 
-            icon="📊" 
-            onClick={() => navigate('/records')} 
-          />
-          <MenuCard 
-            title="Financials" 
-            desc="Pay tuition & view balance" 
-            icon="💳" 
-            onClick={() => navigate('/billing')} 
-          />
+        {/* Dashboard Grid Items */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <DashboardCard icon="📚" title="My Classes" subtitle="LMS Modules" color="bg-blue-500" />
+          <DashboardCard icon="💳" title="Accounting" subtitle="Payments & Balances" color="bg-emerald-500" />
+          <DashboardCard icon="📝" title="Enrollment" subtitle="Subject Encoding" color="bg-amber-500" />
+          <DashboardCard icon="📋" title="Grades" subtitle="Performance Record" color="bg-purple-500" />
         </div>
       </main>
     </div>
   );
 };
 
-// Sub-component for Stats
-const StatCard = ({ title, value, color }) => (
-  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-    <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">{title}</p>
-    <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
-  </div>
-);
-
-// Sub-component for Navigation Cards
-const MenuCard = ({ title, desc, icon, onClick, disabled = false }) => (
-  <button 
-    onClick={onClick}
-    disabled={disabled}
-    className={`group p-6 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all text-left flex flex-col gap-4 ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-1'}`}
-  >
-    <div className="text-4xl">{icon}</div>
-    <div>
-      <h3 className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">{title}</h3>
-      <p className="text-sm text-slate-500">{disabled ? "Access locked (Check payment)" : desc}</p>
+// Reusable Small Component for clean code
+const DashboardCard = ({ icon, title, subtitle, color }) => (
+  <button className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group">
+    <div className={`w-12 h-12 ${color} rounded-2xl flex items-center justify-center text-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
+      {icon}
     </div>
+    <h3 className="font-bold text-slate-800 text-lg">{title}</h3>
+    <p className="text-sm text-slate-400 font-medium">{subtitle}</p>
   </button>
 );
 
