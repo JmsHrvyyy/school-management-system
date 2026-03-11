@@ -19,7 +19,7 @@ const StudentDashboard = () => {
 
   const [branding, setBranding] = useState({
     school_name: 'School Portal',
-    theme_color: '#001f3f', // Default Dark Blue
+    theme_color: '#001f3f',
     school_logo: ''
   });
 
@@ -45,7 +45,7 @@ const StudentDashboard = () => {
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-slate-50 font-black animate-pulse text-slate-400 uppercase tracking-widest">
-      Applying Theme Colors...
+      Loading Student System...
     </div>
   );
 
@@ -62,7 +62,7 @@ const StudentDashboard = () => {
           <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden absolute top-4 right-4 text-white/50 hover:text-white"><X size={20}/></button>
           <div className="w-16 h-16 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center overflow-hidden border-2 border-yellow-500 shadow-xl">
             {branding.school_logo ? (
-              <img src={`${API_BASE_URL}/${branding.school_logo}`} alt="Logo" className="w-full h-full object-cover" />
+              <img src={branding.school_logo} alt="Logo" className="w-full h-full object-cover" />
             ) : (
               <span className="text-slate-800 font-black text-xl italic">CSPB</span>
             )}
@@ -91,40 +91,34 @@ const StudentDashboard = () => {
       {/* --- MAIN CONTENT AREA --- */}
       <main className="flex-1 overflow-y-auto relative flex flex-col">
         
-        {/* TOP NAVBAR (KAKULAY NA NG SIDEBAR) */}
-        <nav 
-          style={{ backgroundColor: branding.theme_color }} 
-          className="sticky top-0 z-30 px-6 py-3 flex justify-between items-center shadow-lg border-b border-white/10"
-        >
+        {/* TOP NAVBAR (Gaya ng Registrar Command Center) */}
+        <nav className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center shadow-sm">
           <div className="flex items-center gap-4">
-             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 text-white bg-white/10 rounded-xl hover:bg-white/20 transition-all"><Menu size={20}/></button>
-             <h2 className="font-black text-white text-xs uppercase tracking-[0.2em] hidden sm:block">Student Command Center</h2>
+             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all"><Menu size={20}/></button>
+             <h2 className="font-black text-slate-800 text-sm uppercase tracking-widest hidden sm:block">Student Dashboard</h2>
           </div>
           
-          <div className="flex items-center gap-4">
-            {/* Notification Bell White version */}
-            <div className="p-2 text-white/70 hover:text-white transition-colors cursor-pointer relative hidden xs:block">
-                <Bell size={20}/>
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-yellow-500 rounded-full border-2 border-[#001f3f]"></span>
-            </div>
-
-            {/* PROFILE AREA (Solid Theme Match) */}
-            <div className="flex items-center gap-3 pl-4 border-l border-white/10">
-              <div className="text-right hidden md:block">
-                <p className="text-[11px] font-black text-white leading-none mb-1 uppercase tracking-tight">
+          <div className="flex items-center gap-3">
+            {/* USER INFO AREA (Upper Right) */}
+            <div className="flex items-center gap-3 text-right">
+              <div className="hidden md:block">
+                <p className="text-[11px] font-black text-slate-900 leading-none mb-1">
                     {studentData?.first_name} {studentData?.last_name}
                 </p>
-                <p className="text-[9px] font-bold text-yellow-500 uppercase tracking-widest">
-                    ID: {studentData?.student_id}
+                <p className={`text-[9px] font-bold uppercase tracking-widest ${studentData?.enrollment_status === 'Verified' ? 'text-green-600' : 'text-orange-500'}`}>
+                    {studentData?.enrollment_status === 'Verified' ? 'SYSTEM VERIFIED' : 'PENDING ACCESS'}
                 </p>
               </div>
               
-              {/* Profile Image with Yellow Border highlight */}
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center border-2 border-yellow-500 shadow-md cursor-pointer hover:scale-105 transition-all bg-white overflow-hidden">
+              {/* Profile Avatar with dynamic Initial */}
+              <div 
+                style={{ backgroundColor: branding.theme_color }} 
+                className="w-10 h-10 rounded-xl flex items-center justify-center border-2 border-white shadow-md cursor-pointer hover:scale-105 transition-transform"
+              >
                 {studentData?.profile_image ? (
-                  <img src={`${API_BASE_URL}/uploads/profiles/${studentData.profile_image}`} className="w-full h-full object-cover" alt="Profile" />
+                  <img src={`${API_BASE_URL}/uploads/profiles/${studentData.profile_image}`} className="w-full h-full rounded-lg object-cover" alt="Profile" />
                 ) : (
-                  <span style={{ color: branding.theme_color }} className="font-black text-sm">
+                  <span className="text-white font-black text-sm">
                     {studentData?.first_name?.charAt(0) || 'J'}
                   </span>
                 )}
@@ -136,7 +130,8 @@ const StudentDashboard = () => {
         {/* PAGE CONTENT */}
         <div className="max-w-6xl mx-auto p-6 md:p-12 w-full">
           
-          <header className="mb-10">
+          {/* HEADER SECTION */}
+          <header className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="flex flex-wrap gap-2 mb-4">
               <span className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-md">
                 {studentData?.grade_level || 'Grade 12'}
@@ -149,24 +144,26 @@ const StudentDashboard = () => {
               Mabuhay, <span style={{ color: branding.theme_color }}>{studentData?.first_name}!</span>
             </h1>
             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">
-               Official Student Access
+               Student ID: {studentData?.student_id || '2026-0004'}
             </p>
           </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              {/* ANNOUNCEMENT */}
-              <div style={{ backgroundColor: branding.theme_color }} className="text-white p-5 rounded-3xl flex items-center gap-5 shadow-xl overflow-hidden relative border-l-8 border-yellow-500">
+              {/* ANNOUNCEMENT BOARD */}
+              <div style={{ backgroundColor: branding.theme_color }} className="text-white p-5 rounded-3xl flex items-center gap-5 shadow-xl overflow-hidden relative">
+                <div className="absolute right-0 top-0 w-32 h-full bg-white/5 -skew-x-12"></div>
                 <Megaphone size={24} className="shrink-0 animate-bounce text-yellow-500" />
                 <marquee className="font-black text-xs uppercase tracking-widest italic">
-                   Status: {studentData?.enrollment_status === 'Verified' ? 'Your account is fully verified for the current school year.' : 'Verification in progress.'}
+                   Important: School Year {studentData?.school_year || '2026-2027'} enrollment is ongoing. Please complete your document verification.
                 </marquee>
               </div>
 
-              {/* INFO TABLE */}
+              {/* ENROLLMENT DETAILS (Gaya ng screenshot mo) */}
               <section className="bg-white border border-slate-200 rounded-[2.5rem] p-6 md:p-10 shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity"><Info size={120} /></div>
                 <h3 className="font-black text-slate-800 mb-8 uppercase text-[10px] tracking-[0.2em] flex items-center gap-2">
-                   <CheckCircle2 size={16} className="text-blue-500"/> Enrollment Records
+                   <CheckCircle2 size={16} className="text-blue-500"/> Enrollment Details
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 relative z-10">
                    <InfoItem label="Grade Level" value={studentData?.grade_level} />
@@ -179,9 +176,10 @@ const StudentDashboard = () => {
               </section>
             </div>
 
+            {/* SIDE CARDS */}
             <div className="space-y-8">
-               <div className={`p-8 rounded-[2.5rem] border-4 transition-all ${isLocked ? 'bg-red-50 border-red-100' : 'bg-emerald-50 border-emerald-100'}`}>
-                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">LMS Connection</p>
+               <div className={`p-8 rounded-[2.5rem] border-4 transition-all ${isLocked ? 'bg-red-50 border-red-100 shadow-sm' : 'bg-emerald-50 border-emerald-100 shadow-sm'}`}>
+                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Account Restriction</p>
                  <div className="flex items-center gap-4">
                     <div style={{ backgroundColor: isLocked ? '#ef4444' : branding.theme_color }} className="text-white p-4 rounded-2xl shadow-lg">
                        {isLocked ? <Lock size={24}/> : <Unlock size={24}/>}
@@ -190,8 +188,17 @@ const StudentDashboard = () => {
                        <p className={`font-black text-xl leading-none ${isLocked ? 'text-red-700' : 'text-emerald-700'}`}>
                           {isLocked ? 'LOCKED' : 'ACTIVE'}
                        </p>
-                       <p className="text-[9px] font-bold text-slate-500 uppercase mt-1">LMS Access Status</p>
+                       <p className="text-[9px] font-bold text-slate-500 uppercase mt-1">E-Learning Account</p>
                     </div>
+                 </div>
+               </div>
+
+               <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl overflow-hidden relative group">
+                 <div className="absolute -bottom-10 -right-10 text-white opacity-5 group-hover:scale-110 transition-transform"><Download size={200}/></div>
+                 <h3 className="font-black text-[9px] uppercase tracking-widest mb-6 text-slate-500 italic underline decoration-yellow-500">Quick Access</h3>
+                 <div className="space-y-3 relative z-10">
+                    <DownloadBtn label="Class Schedule" />
+                    <DownloadBtn label="Student Handbook" />
                  </div>
                </div>
             </div>
@@ -199,7 +206,8 @@ const StudentDashboard = () => {
         </div>
       </main>
       
-      {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"></div>}
+      {/* Overlay para sa Mobile Sidebar */}
+      {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-all"></div>}
     </div>
   );
 };
