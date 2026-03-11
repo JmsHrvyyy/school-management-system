@@ -1,107 +1,97 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const StudentDashboard = () => {
   const { user, logout, branding } = useAuth();
   const navigate = useNavigate();
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  // Sidebar Menu Configuration
+  const menuItems = [
+    { name: 'Dashboard', icon: '🏠', path: '/dashboard' },
+    { name: 'LMS (Classroom)', icon: '📚', path: '/lms' },
+    { name: 'Accounting', icon: '💳', path: '/accounting' },
+    { name: 'Enrollment', icon: '📝', path: '/enrollment' },
+    { name: 'Grades', icon: '📊', path: '/grades' },
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* TOP NAVIGATION BAR */}
-      <nav className="bg-white shadow-sm border-b px-6 py-3 flex justify-between items-center sticky top-0 z-50">
-        
-        {/* TOP LEFT: Logo and School Name */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center overflow-hidden shadow-inner">
-            {branding?.logoUrl ? (
-              <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-white font-black text-xl">
-                {branding?.schoolName?.charAt(0) || 'S'}
-              </span>
-            )}
+    <div className="min-h-screen bg-slate-100 flex">
+      
+      {/* --- SIDEBAR NAVIGATION --- */}
+      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-slate-900 transition-all duration-300 flex flex-col shadow-xl`}>
+        {/* School Logo & Name Section */}
+        <div className="p-4 flex items-center gap-3 border-b border-slate-800 mb-4">
+          <div className="min-w-[40px] h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">
+            {branding?.logoInitial || 'S'}
           </div>
-          <div className="flex flex-col">
-            <h2 className="text-lg font-black text-slate-800 leading-tight tracking-tight">
-              {branding?.schoolName || 'SCHOOL MANAGEMENT SYSTEM'}
-            </h2>
-            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em]">
-              Student Portal
+          {isSidebarOpen && (
+            <span className="font-black text-white text-sm tracking-tight truncate">
+              {branding?.schoolName || 'SMS UNIVERSITY'}
             </span>
-          </div>
+          )}
         </div>
 
-        {/* TOP RIGHT: User Profile & Logout */}
-        <div className="flex items-center gap-4 border-l pl-4">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-slate-800 leading-none">
-              {user?.full_name || 'Student Name'}
-            </p>
-            <p className="text-[11px] text-slate-500 font-medium">
-              {user?.student_id || '2024-0001'}
-            </p>
-          </div>
-          
+        {/* Navigation Links */}
+        <nav className="flex-1 px-3 space-y-2">
+          {menuItems.map((item) => (
+            <button
+              key={item.name}
+              onClick={() => navigate(item.path)}
+              className="w-full flex items-center gap-4 px-3 py-3 rounded-xl text-slate-400 hover:bg-blue-600 hover:text-white transition-all group"
+            >
+              <span className="text-xl">{item.icon}</span>
+              {isSidebarOpen && <span className="font-bold text-sm">{item.name}</span>}
+            </button>
+          ))}
+        </nav>
+
+        {/* User Profile / Logout Section (Bottom of Sidebar) */}
+        <div className="p-4 border-t border-slate-800">
           <button 
             onClick={handleLogout}
-            className="group relative flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-red-50 transition-all duration-300"
-            title="Logout"
+            className="w-full flex items-center gap-4 px-3 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors"
           >
-            {/* User Icon Design */}
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-5 w-5 text-slate-600 group-hover:text-red-600" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            
-            {/* Logout Overlay Indicator */}
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-red-500 border-2 border-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-               <span className="text-[8px] text-white">✕</span>
-            </div>
+            <span className="text-xl">👤</span>
+            {isSidebarOpen && (
+              <div className="text-left overflow-hidden">
+                <p className="text-xs font-black text-white truncate">{user?.full_name || 'Student'}</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Logout</p>
+              </div>
+            )}
           </button>
         </div>
-      </nav>
+      </aside>
 
-      {/* MAIN CONTENT AREA */}
-      <main className="p-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
-        <header className="mb-8">
-          <h1 className="text-3xl font-black text-slate-900">
-            Welcome back, <span className="text-blue-600">{user?.full_name?.split(' ')[0] || 'Student'}</span>!
-          </h1>
-          <p className="text-slate-500 mt-1">Here is what's happening with your campus life today.</p>
+      {/* --- MAIN CONTENT AREA --- */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        
+        {/* Top Header */}
+        <header className="h-16 bg-white border-b flex items-center justify-between px-8 shadow-sm">
+           <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setSidebarOpen(!isSidebarOpen)}
+                className="p-2 hover:bg-slate-100 rounded-lg text-slate-600"
+              >
+                ☰
+              </button>
+              <h2 className="text-lg font-black text-slate-800 uppercase tracking-widest">
+                Student Portal
+              </h2>
+           </div>
+           
+           <div className="flex items-center gap-4">
+              <div className="bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
+                <span className="text-xs font-bold text-blue-600">S.Y. 2025-2026 | 1st Sem</span>
+              </div>
+           </div>
         </header>
 
-        {/* Dashboard Grid Items */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <DashboardCard icon="📚" title="My Classes" subtitle="LMS Modules" color="bg-blue-500" />
-          <DashboardCard icon="💳" title="Accounting" subtitle="Payments & Balances" color="bg-emerald-500" />
-          <DashboardCard icon="📝" title="Enrollment" subtitle="Subject Encoding" color="bg-amber-500" />
-          <DashboardCard icon="📋" title="Grades" subtitle="Performance Record" color="bg-purple-500" />
-        </div>
-      </main>
-    </div>
-  );
-};
-
-// Reusable Small Component for clean code
-const DashboardCard = ({ icon, title, subtitle, color }) => (
-  <button className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group">
-    <div className={`w-12 h-12 ${color} rounded-2xl flex items-center justify-center text-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
-      {icon}
-    </div>
-    <h3 className="font-bold text-slate-800 text-lg">{title}</h3>
-    <p className="text-sm text-slate-400 font-medium">{subtitle}</p>
-  </button>
-);
-
-export default StudentDashboard;
+        {/* Dashboard View (The actual "Inside" of the portal) */}
+        <main className="p-8 overflow-y-
