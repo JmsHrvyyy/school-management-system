@@ -1,12 +1,19 @@
 import React from 'react';
+// React Required Libraries
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+//account auth
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import PublicRoute from './components/routing/PublicRoute';
 import SetupPassword from './pages/auth/SetupPassword'; // O kung saan mo man sinave
 import ForgotPassword from './pages/auth/ForgotPassword'; // <-- Siguraduhin na tama ang path
 import ResetPassword from './pages/auth/ResetPassword';
+
+// Registrar Pages
 import StudentManagement from './pages/registrar/StudentManagement'; // (Palitan path depende sa kung saan mo sinave)
+
+// Student Pages
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentAccounting from './pages/student/StudentAccounting';
 
@@ -20,6 +27,7 @@ import CollectionReports from './pages/cashier/CollectionReports';
 
 // Layouts
 import AdminLayout from './layouts/AdminLayout';
+import StudentLayout from './layouts/StudentLayout';
 
 // Pages
 import LandingPage from './pages/landingpage'; // Ang bagong "Front Door"
@@ -69,10 +77,7 @@ function App() {
 
           <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
-          {/* Kung gumagamit ka ng ProtectedRoute, ganito: */}
-          <Route path="student/dashboard" element={<ProtectedRoute allowedRoles={['student']}><StudentDashboard /></ProtectedRoute>} />
-          <Route path="student/accounting" element={<ProtectedRoute allowedRoles={['student']}><StudentAccounting /></ProtectedRoute>} />
-
+        
 {/* O kung basic Route lang muna: */}
 {/* <Route path="/student/dashboard" element={<StudentDashboard />} /> */}
 
@@ -117,7 +122,7 @@ function App() {
           {/* 6. LMS / STUDENTS ROUTES (Kay Joshua) */}
           <Route path="/student" element={
             <ProtectedRoute allowedRoles={['student']}>
-              <AdminLayout />
+              <StudentLayout/>
             </ProtectedRoute>
           }>
             <Route path="dashboard" element={<StudentDashboard />} />
