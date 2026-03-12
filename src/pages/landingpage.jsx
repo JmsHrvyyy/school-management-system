@@ -1,12 +1,12 @@
-import React, { useState } from 'react'; // Idinagdag ang useState
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Users, ShieldCheck, ArrowRight, Menu, X } from 'lucide-react'; // Idinagdag ang Menu at X
+import { GraduationCap, Users, ShieldCheck, ArrowRight, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const { branding } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // State para sa Mobile Menu
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -23,12 +23,6 @@ const LandingPage = () => {
             <a href="#" className="hover:text-blue-600 transition-colors">Home</a>
             <a href="#" className="hover:text-blue-600 transition-colors">Admissions</a>
             <a href="#" className="hover:text-blue-600 transition-colors">About Us</a>
-            <button 
-              onClick={() => navigate('/staff/login')}
-              className="bg-slate-100 px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-200 transition-all"
-            >
-              Staff Portal
-            </button>
           </div>
 
           {/* HAMBURGER BUTTON (Lilitaw lang sa mobile) */}
@@ -46,19 +40,11 @@ const LandingPage = () => {
             <a href="#" className="block text-sm font-bold text-slate-600 py-2">Home</a>
             <a href="#" className="block text-sm font-bold text-slate-600 py-2">Admissions</a>
             <a href="#" className="block text-sm font-bold text-slate-600 py-2">About Us</a>
-            <div className="pt-4 border-t border-slate-50">
-              <button 
-                onClick={() => navigate('/staff/login')}
-                className="w-full py-3 bg-slate-100 text-slate-600 font-bold rounded-2xl text-sm"
-              >
-                Staff Portal Login
-              </button>
-            </div>
           </div>
         )}
       </nav>
 
-      {/* Hero Section & Student Login Card */}
+      {/* Hero Section & Portal Selection Card */}
       <main className="flex-grow flex items-center justify-center p-6 md:p-12">
         <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           
@@ -76,55 +62,59 @@ const LandingPage = () => {
             </p>
           </div>
 
-          {/* Right Side: Student Login Card */}
+          {/* Right Side: Portal Selection Buttons */}
           <div className="animate-in fade-in slide-in-from-right-8 duration-700">
             <div className="bg-white rounded-[3rem] shadow-2xl shadow-slate-200 p-8 md:p-10 border border-slate-100">
-              <div className="mb-8">
-                <h3 className="text-2xl font-black text-slate-800 tracking-tight">Student Login</h3>
-                <p className="text-slate-400 text-sm font-medium">Enter your credentials to access the portal.</p>
+              <div className="mb-8 text-center lg:text-left">
+                <h3 className="text-2xl font-black text-slate-800 tracking-tight">Access Your Portal</h3>
+                <p className="text-slate-400 text-sm font-medium">Select your account type to continue.</p>
               </div>
 
-              <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); navigate('/login'); }}>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Student ID Number</label>
-                  <input 
-                    type="text" required
-                    placeholder="2026-0001" 
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition-all text-sm font-bold"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Password</label>
-                  <input 
-                    type="password" required
-                    placeholder="••••••••" 
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition-all text-sm font-bold"
-                  />
-                </div>
+              <div className="space-y-4">
+                {/* STUDENT PORTAL BUTTON */}
                 <button 
-                  type="submit"
-                  className="shine-effect w-full py-4 text-white font-bold rounded-2xl shadow-xl transition-all active:scale-[0.98] flex items-center justify-center space-x-2"
-                  style={{ backgroundColor: branding.theme_color || '#2563eb' }}
+                  onClick={() => navigate('/login')}
+                  className="group w-full p-6 bg-blue-50 hover:bg-blue-600 border border-blue-100 rounded-[2rem] flex items-center justify-between transition-all duration-300 active:scale-[0.98]"
                 >
-                  <span>Log In to Portal</span>
-                  <ArrowRight size={18} />
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm group-hover:scale-110 transition-transform">
+                      <GraduationCap size={24} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 group-hover:text-blue-100">Portal Access</p>
+                      <p className="text-lg font-black text-slate-800 group-hover:text-white leading-none">Student Portal</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="text-blue-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
                 </button>
-              </form>
 
-              <div className="mt-8 text-center">
-                <button type="button" onClick={() => navigate('/forgot-password')} className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest">
-                  Forgot Password?
+                {/* STAFF/TEACHER PORTAL BUTTON */}
+                <button 
+                  onClick={() => navigate('/staff/login')}
+                  className="group w-full p-6 bg-slate-50 hover:bg-slate-800 border border-slate-200 rounded-[2rem] flex items-center justify-between transition-all duration-300 active:scale-[0.98]"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-600 shadow-sm group-hover:scale-110 transition-transform">
+                      <Users size={24} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-300">Staff Access</p>
+                      <p className="text-lg font-black text-slate-800 group-hover:text-white leading-none">Staff Portal</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
                 </button>
               </div>
             </div>
           </div>
+
         </div>
       </main>
 
       {/* Footer */}
       <footer className="p-8 text-center border-t border-slate-100 bg-white">
         <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-          &copy; 2026 {branding.school_name}. Powered by SMS Technology.
+          &copy; {new Date().getFullYear()} {branding.school_name}. Powered by SMS Technology.
         </p>
       </footer>
     </div>
