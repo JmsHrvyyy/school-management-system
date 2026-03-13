@@ -1,3 +1,4 @@
+// src/layouts/StudentLayout.jsx
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
@@ -5,20 +6,19 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import ProfileModal from '../components/student/ProfileModal'; // Siguraduhing ginawa mo itong file
+import ProfileModal from '../components/student/ProfileModal';
 
 const StudentLayout = () => {
   const { user, logout, branding } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Global Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); 
   const [studentData, setStudentData] = useState(null);
   
   const location = useLocation();
   const navigate = useNavigate();
   const API_BASE_URL = "http://localhost/sms-api";
 
-  // States para sa Profile Update (Global)
   const [editForm, setEditForm] = useState({ email: '', contact_no: '', address: '' });
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -57,7 +57,6 @@ const StudentLayout = () => {
     return 'Student Portal';
   };
 
-  // Global Profile Update Handler
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     const formData = new FormData();
@@ -74,7 +73,7 @@ const StudentLayout = () => {
       if (res.data.success) {
         alert("Profile updated successfully!");
         setIsEditModalOpen(false);
-        fetchData(); // Refresh data sa layout
+        fetchData();
       }
     } catch (err) {
       alert("Update failed.");
@@ -111,23 +110,14 @@ const StudentLayout = () => {
           ))}
         </nav>
 
-        {/* SIDEBAR FOOTER (USER INFO) */}
+        {/* SIDEBAR FOOTER - CLEAN SIGN OUT ONLY */}
         <div className="p-4 border-t border-white/5 bg-black/20">
-          <div className="flex items-center space-x-3 mb-4 px-2">
-             <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold border border-white/20 bg-white/10 text-yellow-500">
-                {user?.role?.toUpperCase().charAt(0)}
-             </div>
-             <div className="overflow-hidden">
-                <p className="text-xs font-bold text-white truncate">{user?.full_name}</p>
-                <p className="text-[10px] text-white/40 uppercase tracking-tighter italic">Learner Account</p>
-             </div>
-          </div>
           <button 
             onClick={logout} 
-            className="flex items-center space-x-3 p-3 w-full rounded-xl hover:bg-red-500/20 text-white/60 hover:text-red-400 transition-all duration-200"
+            className="flex items-center space-x-3 p-4 w-full rounded-2xl hover:bg-red-500 text-white transition-all duration-200 group"
           >
-            <LogOut size={18} />
-            <span className="text-sm font-semibold">Sign Out</span>
+            <LogOut size={20} className="group-hover:rotate-12 transition-transform" />
+            <span className="text-sm font-black uppercase tracking-widest">Sign Out</span>
           </button>
         </div>
       </aside>
@@ -209,7 +199,6 @@ const StudentLayout = () => {
         API_BASE_URL={API_BASE_URL}
       />
 
-      {/* MOBILE OVERLAY */}
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm" />}
     </div>
   );
