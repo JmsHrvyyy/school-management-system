@@ -1,4 +1,3 @@
-// src/components/student/ProfileModal.jsx
 import React from 'react';
 import { X, Save, Lock, User, Phone, MapPin, Mail, Hash } from 'lucide-react';
 
@@ -24,18 +23,18 @@ const ProfileModal = ({
         <div style={{ backgroundColor: branding.theme_color }} className="px-10 py-6 text-white flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
             <User size={20} />
-            <h3 className="font-black text-xs uppercase tracking-widest">Edit Student Profile</h3>
+            <h3 className="font-black text-xs uppercase tracking-widest">Update Profile Information</h3>
           </div>
           <button onClick={onClose} className="hover:bg-white/20 p-2 rounded-xl transition-colors">
             <X size={20}/>
           </button>
         </div>
 
-        {/* Modal Body (Form) */}
+        {/* Modal Body */}
         <form onSubmit={handleUpdateProfile} className="p-10 overflow-y-auto space-y-8">
           <div className="flex flex-col md:flex-row gap-8">
             
-            {/* Profile Picture Section */}
+            {/* Profile Image Section */}
             <div className="flex flex-col items-center gap-4">
               <div className="w-40 h-40 rounded-[2rem] overflow-hidden bg-slate-100 border-4 border-white shadow-xl relative group">
                 {previewUrl ? (
@@ -54,10 +53,10 @@ const ProfileModal = ({
               </label>
             </div>
             
-            {/* Information Fields */}
+            {/* Input Fields */}
             <div className="flex-1 space-y-5">
               
-              {/* READ-ONLY FIELDS (Para sa record security) */}
+              {/* READ-ONLY FIELDS */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase ml-1 flex items-center gap-1">
@@ -69,7 +68,7 @@ const ProfileModal = ({
                 </div>
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase ml-1 flex items-center gap-1">
-                    <Hash size={10}/> LRN Number
+                    <Hash size={10}/> LRN
                   </label>
                   <div className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-black text-slate-400 flex justify-between items-center cursor-not-allowed">
                     {studentData?.lrn || 'N/A'} <Lock size={12}/>
@@ -79,57 +78,53 @@ const ProfileModal = ({
 
               {/* EDITABLE FIELDS */}
               <div className="space-y-4">
-                {/* Email */}
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase ml-1 flex items-center gap-1">
                     <Mail size={10}/> Email Address
                   </label>
                   <input 
                     type="email"
-                    className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500/20"
                     value={editForm.email} 
                     onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                    placeholder="Enter email address"
+                    placeholder="Enter email"
                   />
                 </div>
 
-                {/* Contact Number */}
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase ml-1 flex items-center gap-1">
                     <Phone size={10}/> Contact Number
                   </label>
                   <input 
                     type="text"
-                    className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500/20"
                     value={editForm.contact_no} 
                     onChange={(e) => setEditForm({...editForm, contact_no: e.target.value})}
                     placeholder="e.g. 09123456789"
                   />
                 </div>
 
-                {/* Home Address */}
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase ml-1 flex items-center gap-1">
                     <MapPin size={10}/> Home Address
                   </label>
                   <textarea 
-                    className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all min-h-[80px] resize-none"
+                    className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[80px] resize-none"
                     value={editForm.address} 
                     onChange={(e) => setEditForm({...editForm, address: e.target.value})}
-                    placeholder="Enter complete home address"
+                    placeholder="Enter full address"
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Action Button */}
           <button 
             type="submit" 
             style={{ backgroundColor: branding.theme_color }} 
             className="w-full py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
-            <Save size={16} /> Save All Updates
+            <Save size={16} /> Save Changes
           </button>
         </form>
       </div>
