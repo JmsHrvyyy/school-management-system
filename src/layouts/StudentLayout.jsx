@@ -167,19 +167,37 @@ const StudentLayout = () => {
               </p>
               
               {/* STATUS INDICATOR LOGIC */}
-              <p className={`text-[9px] font-bold uppercase tracking-widest ${
-                studentData?.payment_status === "Unpaid" 
-                  ? "text-red-500" 
-                  : studentData?.payment_status === "Partial" 
-                    ? "text-yellow-500" 
-                    : "text-green-600"
-              }`}>
-                {studentData?.payment_status === "Unpaid" 
-                  ? "Unpaid" 
-                  : studentData?.payment_status === "Partial" 
-                    ? "Partial" 
-                    : "Paid"}
-              </p>
+          {(() => {
+          // Siguraduhin na Numbers ang hawak natin
+         const total = Number(studentData?.total_amount || 0);
+         const paid = Number(studentData?.paid_amount || 0);
+         const balance = Number(studentData?.balance || 0);
+
+        let statusLabel = "";
+        let statusColor = "";
+
+           // 1. UNPAID: Zero ang bayad
+          if (paid <= 0) {
+          statusLabel = "Unpaid";
+          statusColor = "text-red-500";
+       } 
+          // 2. FULLY PAID: Ang balance ay 0 at ang bayad ay >= sa total
+         else if (balance <= 0 && paid >= total) {
+          statusLabel = "Fully Paid";
+          statusColor = "text-green-600";
+       } 
+          // 3. PARTIAL: May bayad na (paid > 0) pero may balance pa (balance > 0)
+         else {
+          statusLabel = "Partial";
+          statusColor = "text-yellow-500";
+       }
+
+        return (
+       <p className={`text-[9px] font-bold uppercase tracking-widest ${statusColor}`}>
+      {statusLabel}
+       </p>
+       );
+      })()}
             </div>
 
             <button
