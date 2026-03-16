@@ -29,7 +29,7 @@ const StudentRequests = () => {
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}/get_registrar_requests.php`);
+      const res = await axios.get(`${API_BASE_URL}/registrar/get_registrar_requests.php`);
       setRequests(res.data);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
@@ -48,7 +48,7 @@ const StudentRequests = () => {
     setSearchQuery(query);
     if (query.length > 2) {
       try {
-        const res = await axios.get(`${API_BASE_URL}/search_students.php?q=${query}`);
+        const res = await axios.get(`${API_BASE_URL}/registrar/search_students.php?q=${query}`);
         setStudents(res.data);
       } catch (err) { console.error(err); }
     } else {
