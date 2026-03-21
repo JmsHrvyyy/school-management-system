@@ -19,6 +19,9 @@ const StudentDashboard = () => {
   const [billingItems, setBillingItems] = useState([]); 
   const [viewModal, setViewModal] = useState({ open: false, type: '' });
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  
+  // --- ADDED STATE FOR ORIGINAL BILLING (PARA SA TUITION CALCULATION) ---
+  const [allBillingItems, setAllBillingItems] = useState([]);
 
   const API_BASE_URL = "http://localhost/sms-api"; 
 
@@ -38,6 +41,10 @@ const StudentDashboard = () => {
             parseInt(item.billing_id) === parseInt(myData.billing_id)
           );
 
+          // Save original items for threshold calculation
+          setAllBillingItems(rawItems);
+
+          // Logic para sa breakdown display (kung ano pa ang kulang)
           let currentPaidPool = paid;
           const remainingItems = rawItems.map(item => {
             let itemAmount = parseFloat(item.amount);
@@ -73,6 +80,7 @@ const StudentDashboard = () => {
     window.print();
   };
 
+  // --- CALCULATION LOGIC ---
   const totalAmount = parseFloat(studentData?.total_amount || 0);
   const paidAmount = parseFloat(studentData?.paid_amount || 0);
   const remainingBalance = Math.max(0, totalAmount - paidAmount);
@@ -80,7 +88,42 @@ const StudentDashboard = () => {
   const isPaid = paidAmount >= totalAmount && totalAmount > 0;
   const isUnpaid = paidAmount <= 0;
   const isPartial = paidAmount > 0 && paidAmount < totalAmount;
-  const isLmsActive = isPaid;
+
+  // --- STRICT ITEM-SPECIFIC LMS LOGIC (NEW UPDATE) ---
+  // Hahanapin natin ang Tuition Item at ang specific na paid_amount nito mula sa database
+  const tuitionItem = allBillingItems.find(item => 
+    item.item_name.toLowerCase().includes('tuition')
+  );
+
+  // Kunin ang actual na bayad na pumasok sa Tuition item lang
+  const actualTuitionPaid = tuitionItem ? parseFloat(tuitionItem.paid_amount || 0) : 0;
+  const tuitionAmount = tuitionItem ? parseFloat(tuitionItem.amount || 0) : 0;
+  const tuitionThreshold = tuitionAmount * 0.5;
+
+  // LMS is active ONLY if:
+  // 1. Fully paid na ang lahat (isPaid)
+  // 2. OR ang ACTUAL payment sa TUITION item ay umabot na sa 50%
+  const isLmsActive = isPaid || (tuitionAmount > 0 && actualTuitionPaid >= tuitionThreshold);
+
+  // --- DYNAMIC STYLES FOR LMS CARD AND NOTICES ---
+  let lmsStatusLabel = "INACTIVE";
+  let lmsBgColor = "bg-red-50 border-red-100";
+  let lmsStatusColor = "bg-red-500";
+  let lmsTextColor = "text-red-700";
+
+  if (isLmsActive) {
+    if (isPaid) {
+      lmsStatusLabel = "ACTIVE";
+      lmsBgColor = "bg-emerald-50 border-emerald-100";
+      lmsStatusColor = "bg-emerald-500";
+      lmsTextColor = "text-emerald-700";
+    } else {
+      lmsStatusLabel = "ACTIVE";
+      lmsBgColor = "bg-yellow-50 border-yellow-100";
+      lmsStatusColor = "bg-yellow-500";
+      lmsTextColor = "text-yellow-700";
+    }
+  }
   
   const safeThemeColor = branding?.theme_color?.startsWith('#') ? branding.theme_color : '#3b82f6';
 
@@ -94,7 +137,6 @@ const StudentDashboard = () => {
   return (
     <div className="max-w-6xl mx-auto p-6 md:p-12 w-full space-y-8 animate-in fade-in duration-500 font-sans print:p-0 print:m-0 print:max-w-none">
       
-      {/* ADDED CUSTOM CSS FOR THE SCROLLING TEXT */}
       <style>
         {`
           @keyframes scroll-text {
@@ -132,17 +174,24 @@ const StudentDashboard = () => {
           </div>
         </header>
 
-        {(isUnpaid || isPartial) && (
-          <div className={`${isUnpaid ? 'bg-red-50 border-red-100' : 'bg-yellow-50 border-yellow-100'} border-2 p-5 rounded-3xl flex items-center gap-4`}>
-            <div className={`${isUnpaid ? 'bg-red-500' : 'bg-yellow-500'} text-white p-2 rounded-xl shadow-lg`}>
-              {isUnpaid ? <Lock size={20} /> : <Info size={20} />}
-            </div>
-            <p className={`text-[11px] font-black uppercase tracking-tight ${isUnpaid ? 'text-red-900' : 'text-yellow-900'}`}>
-              Account Notice: Your account status is {isUnpaid ? 'UNPAID' : 'PARTIAL'}. 
-              {isUnpaid ? ' Please settle your balance to activate all features.' : ` You have a remaining balance of ₱${remainingBalance.toLocaleString()} to settle.`}
+        {/* --- DYNAMIC ACCOUNT NOTICE --- */}
+        <div className={`border-2 p-5 rounded-3xl flex items-center gap-4 ${!isLmsActive ? 'bg-red-50 border-red-100' : isPaid ? 'bg-emerald-50 border-emerald-100' : 'bg-yellow-50 border-yellow-100'}`}>
+          <div className={`text-white p-2 rounded-xl shadow-lg ${!isLmsActive ? 'bg-red-500' : isPaid ? 'bg-emerald-500' : 'bg-yellow-500'}`}>
+            {!isLmsActive ? <Lock size={20} /> : <CheckCircle2 size={20} />}
+          </div>
+          <div className="flex flex-col">
+            <p className={`text-[11px] font-black uppercase tracking-tight ${!isLmsActive ? 'text-red-900' : isPaid ? 'text-emerald-900' : 'text-yellow-900'}`}>
+              Account Status: {!isLmsActive ? 'LMS ACCESS LOCKED' : isPaid ? 'ACCOUNT FULLY SETTLED' : 'LMS ACCESS ACTIVE (PARTIAL)'}
+            </p>
+            <p className="text-[9px] font-bold text-slate-500 uppercase">
+              {!isLmsActive 
+                ? `Requirement: You need to pay at least ₱${tuitionThreshold.toLocaleString()} (50% of Tuition) to unlock LMS.` 
+                : isPaid 
+                  ? "Enjoy full access to all school services and digital platforms."
+                  : `Tuition milestone reached. Remaining balance of ₱${remainingBalance.toLocaleString()} still applies for other fees.`}
             </p>
           </div>
-        )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
@@ -171,12 +220,11 @@ const StudentDashboard = () => {
                 </div>
             </div>
 
-            {/* UPDATED ANNOUNCEMENT BAR WITH WORKING ANIMATION */}
             <div style={{ backgroundColor: safeThemeColor }} className="text-white p-5 rounded-3xl flex items-center gap-5 shadow-xl overflow-hidden relative">
               <Megaphone size={24} className="shrink-0 animate-bounce text-yellow-500 z-10 bg-inherit pr-2" />
               <div className="flex-1 overflow-hidden">
                 <p className="animate-scroll font-black text-xs uppercase tracking-widest italic">
-                   Important: School Year {studentData?.school_year} enrollment is ongoing. Please visit the registrar for more details. 
+                    Important: School Year {studentData?.school_year} enrollment is ongoing. Please visit the registrar for more details. 
                 </p>
               </div>
             </div>
@@ -197,26 +245,36 @@ const StudentDashboard = () => {
           </div>
 
           <div className="space-y-8">
-              <div className={`p-8 rounded-[2.5rem] border-4 transition-all duration-500 
-                ${isLmsActive ? 'bg-emerald-50 border-emerald-100' : 
-                  isUnpaid ? 'bg-red-50 border-red-100' : 
-                  'bg-yellow-50 border-yellow-100'}`}>
+              {/* LMS ACCESS STATUS CARD - DYNAMICALLY UPDATED */}
+              <div className={`p-8 rounded-[2.5rem] border-4 transition-all duration-500 ${lmsBgColor}`}>
                 <div className="flex items-center gap-4">
-                   <div className={`text-white p-4 rounded-2xl shadow-lg transition-colors duration-500 
-                      ${isLmsActive ? 'bg-emerald-500' : 
-                        isUnpaid ? 'bg-red-500' : 
-                        'bg-yellow-500'}`}>
+                   <div className={`text-white p-4 rounded-2xl shadow-lg transition-colors duration-500 ${lmsStatusColor}`}>
                       {isLmsActive ? <Unlock size={24}/> : <Lock size={24}/>}
                    </div>
                    <div>
-                      <p className={`font-black text-xl leading-none 
-                        ${isLmsActive ? 'text-emerald-700' : 
-                          isUnpaid ? 'text-red-700' : 
-                          'text-yellow-700'}`}>
-                        {isLmsActive ? 'ACTIVE' : 'INACTIVE'}
+                      <p className={`font-black text-xl leading-none ${lmsTextColor}`}>
+                        {lmsStatusLabel}
                       </p>
                       <p className="text-[9px] font-bold text-slate-500 uppercase mt-1">LMS Access Status</p>
                    </div>
+                </div>
+                
+                <div className="mt-4">
+                   {!isLmsActive && (
+                     <p className="text-[8px] font-bold text-red-700 uppercase italic leading-tight">
+                        * Minimum of 50% tuition payment (₱{tuitionThreshold.toLocaleString()}) required.
+                     </p>
+                   )}
+                   {isLmsActive && !isPaid && (
+                     <p className="text-[8px] font-bold text-yellow-700 uppercase italic leading-tight">
+                        * LMS Active (Tuition Milestone reached).
+                     </p>
+                   )}
+                   {isPaid && (
+                     <p className="text-[8px] font-bold text-emerald-700 uppercase italic leading-tight">
+                        * LMS Active (Account Fully Paid).
+                     </p>
+                   )}
                 </div>
               </div>
 
