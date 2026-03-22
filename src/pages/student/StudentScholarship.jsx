@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   Upload, Send, CheckCircle2, Info, 
-  FileText, Loader2, AlertCircle, X, Trash2 
+  FileText, Loader2, AlertCircle, X, Trash2,
+  Clock, CheckCircle, XCircle 
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -11,10 +12,11 @@ const StudentScholarship = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [scholarshipTypes, setScholarshipTypes] = useState([]);
+  // DAGDAG: State para sa existing applications ng student
+  const [myApplications, setMyApplications] = useState([]);
   
-  // Updated to handle multiple files
   const [selectedType, setSelectedType] = useState('');
-  const [files, setFiles] = useState([]); // Changed from null to empty array
+  const [files, setFiles] = useState([]); 
   const [message, setMessage] = useState({ text: '', type: '' });
 
   const API_BASE_URL = "http://localhost/sms-api";
@@ -22,6 +24,7 @@ const StudentScholarship = () => {
 
   useEffect(() => {
     fetchScholarships();
+    fetchMyApplications(); // I-fetch ang status pagka-load ng page
   }, []);
 
   const fetchScholarships = async () => {
@@ -39,13 +42,23 @@ const StudentScholarship = () => {
     }
   };
 
-  // Function to handle multiple file selection
+  // DAGDAG: Function para makuha ang application status ng student
+  const fetchMyApplications = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/get_student_applications.php?email=${user.email}`);
+      if (res.data.status === 'success') {
+        setMyApplications(res.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching application status:", err);
+    }
+  };
+
   const handleFileChange = (e) => {
     const chosenFiles = Array.from(e.target.files);
     setFiles((prevFiles) => [...prevFiles, ...chosenFiles]);
   };
 
-  // Function to remove a specific file from the list
   const removeFile = (index) => {
     setFiles(files.filter((_, i) => i !== index));
   };
@@ -62,7 +75,6 @@ const StudentScholarship = () => {
     formData.append('email', user.email);
     formData.append('scholarship_id', selectedType);
     
-    // Append each file to the FormData object
     files.forEach((file, index) => {
       formData.append(`requirements[${index}]`, file);
     });
@@ -75,6 +87,7 @@ const StudentScholarship = () => {
         setMessage({ text: 'Application submitted successfully!', type: 'success' });
         setFiles([]);
         setSelectedType('');
+        fetchMyApplications(); // Refresh ang listahan pagkatapos mag-submit
       } else {
         setMessage({ text: res.data.message, type: 'error' });
       }
@@ -120,9 +133,9 @@ const StudentScholarship = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 space-y-8">
+          {/* MAIN FORM */}
           <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-[2.5rem] p-8 md:p-10 shadow-sm space-y-8">
-            
             <section className="space-y-4">
               <label className="font-black text-slate-800 uppercase text-[10px] tracking-[0.2em] flex items-center gap-2">
                 <Info size={16} className="text-blue-500"/> Select Scholarship Program
@@ -149,12 +162,11 @@ const StudentScholarship = () => {
               <label className="font-black text-slate-800 uppercase text-[10px] tracking-[0.2em] flex items-center gap-2">
                 <FileText size={16} className="text-blue-500"/> Upload Documentary Requirements
               </label>
-              
               <div className="relative group">
                 <input 
                   type="file" 
                   onChange={handleFileChange}
-                  multiple // ALLOWS MULTIPLE SELECTION
+                  multiple 
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   accept=".pdf,.jpg,.jpeg,.png"
                 />
@@ -165,30 +177,18 @@ const StudentScholarship = () => {
                   <p className="text-sm font-black text-slate-700 uppercase tracking-tight">
                     {files.length > 0 ? `${files.length} file(s) selected` : "Drop files here or click to browse"}
                   </p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-2">
-                    PDF, PNG, or JPG (Max 5MB each)
-                  </p>
                 </div>
               </div>
 
-              {/* FILE LIST VIEW */}
               {files.length > 0 && (
                 <div className="space-y-2 mt-4">
                   {files.map((f, index) => (
                     <div key={index} className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
                       <div className="flex items-center gap-3">
                         <FileText size={14} className="text-blue-500" />
-                        <span className="text-[10px] font-black text-slate-600 truncate max-w-[200px] uppercase">
-                          {f.name}
-                        </span>
+                        <span className="text-[10px] font-black text-slate-600 truncate max-w-[200px] uppercase">{f.name}</span>
                       </div>
-                      <button 
-                        type="button"
-                        onClick={() => removeFile(index)}
-                        className="text-red-400 hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <button type="button" onClick={() => removeFile(index)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
                     </div>
                   ))}
                 </div>
@@ -205,6 +205,41 @@ const StudentScholarship = () => {
               {submitting ? "Processing..." : "Submit Application"}
             </button>
           </form>
+
+          {/* DAGDAG: APPLICATION STATUS TRACKER SECTION */}
+          <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 md:p-10 shadow-sm">
+            <h3 className="font-black text-slate-800 uppercase text-[12px] tracking-[0.2em] mb-6 flex items-center gap-2">
+              <Clock size={18} className="text-blue-600" /> My Application History
+            </h3>
+            
+            <div className="space-y-4">
+              {myApplications.length > 0 ? (
+                myApplications.map((app, index) => (
+                  <div key={index} className="flex items-center justify-between p-5 rounded-3xl border border-slate-100 bg-slate-50/50">
+                    <div className="space-y-1">
+                      <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{app.scholarship_name}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Applied on {app.date_applied}</p>
+                    </div>
+                    
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${
+                      app.status === 'Approved' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
+                      app.status === 'Rejected' ? 'bg-red-50 border-red-100 text-red-600' :
+                      'bg-orange-50 border-orange-100 text-orange-600'
+                    }`}>
+                      {app.status === 'Approved' ? <CheckCircle size={14}/> : 
+                       app.status === 'Rejected' ? <XCircle size={14}/> : 
+                       <Loader2 className="animate-spin" size={14}/>}
+                      <span className="text-[10px] font-black uppercase tracking-widest">{app.status}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">No applications found.</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="space-y-6">
