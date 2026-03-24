@@ -20,6 +20,7 @@ import TeacherAssignments from './pages/registrar/TeacherAssignments'; // Dito a
 import StudentRequests from './pages/registrar/StudentRequests'; // <--- Ito yung bagong page
 import AcademicPrograms from './pages/registrar/AcademicPrograms'; // <--- BAGONG DAGDAG
 import ScholarshipApplications from './pages/registrar/ScholarshipApplications';
+import RegistrarSubjects from './pages/registrar/RegistrarSubjects';
 // Student Pages
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentAccounting from './pages/student/StudentAccounting';
@@ -163,22 +164,27 @@ function App() {
             {/* Sidenav Item 1: Dashboard */}
             <Route path="dashboard" element={<RegistrarDashboard />} />
             
-            {/* Sidenav Item 2: Masterlist & Profiles (Walang enrollment details dito) */}
+            {/* Sidenav Item 2: Masterlist & Profiles */}
             <Route path="students" element={<StudentManagement />} />
             
-            {/* BAGONG DAGDAG - Sidenav Item 3: Student Requests (TOR, COE, etc.) */}
-              <Route path="requests" element={<StudentRequests />} />
+            {/* BAGONG DAGDAG - Sidenav Item 3: Student Requests */}
+            <Route path="requests" element={<StudentRequests />} />
 
-            {/* Sidenav Item 4: Enrollment Module (Checklist ng Fees, Sectioning) */}
+            {/* Sidenav Item 4: Enrollment Module */}
             <Route path="enrollment" element={<EnrollmentModule />} />
 
-            {/* Sidenav Item 5: Academic Programs (SHS/College) */}
+            {/* Sidenav Item 5: Academic Programs */}
             <Route path="programs" element={<AcademicPrograms />} />
             
             {/* Sidenav Item 6: Teacher & Class Assignments */}
             <Route path="assignments" element={<TeacherAssignments />} />
 
+            {/* Sidenav Item 7: Scholarship Applications */}
             <Route path="scholarships" element={<ScholarshipApplications />} />
+
+            {/* FIX: Inalis ang "/registrar/" para maging relative path tulad ng iba */}
+            <Route path="subjects" element={<RegistrarSubjects />} />
+            
           </Route>
 
           {/* 8. FALLBACK */}

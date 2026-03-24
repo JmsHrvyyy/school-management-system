@@ -1,51 +1,63 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Users, AlertCircle, Clock, Zap, WifiOff, ChevronRight } from 'lucide-react';
+import { BookOpen, Users, AlertCircle, Clock, Zap, ChevronRight } from 'lucide-react';
 import { getActiveSchoolYear } from '../../utils/dateUtils'; 
 import OfflineBanner from '../../utils/offlinebanner';
+import { useAuth } from '../../context/AuthContext'; // <-- ADDED: I-import ang AuthContext
+import axios from 'axios'; // <-- ADDED: Gamitin natin axios for cleaner API calls
 
 const TeacherDashboard = () => {
   const { syStart, syEnd, semester } = getActiveSchoolYear();
+  const { user } = useAuth(); // <-- ADDED: Kunin ang logged in user data
   const [stats, setStats] = useState({ classes: 0, students: 0, pendingGrading: 0 });
   const [schedules, setSchedules] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isServerOffline, setIsServerOffline] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
 
-  const fetchDashboardData = async () => {
-    setIsRetrying(true);
-    const cachedStats = localStorage.getItem('sms_teacher_stats');
-    const cachedSchedules = localStorage.getItem('sms_teacher_schedules');
+  // Gamitin ang base URL ng SMS API
+  const API_BASE_URL = "http://localhost/sms-api";
 
-    if (cachedStats && cachedSchedules && !isRetrying) {
-      setStats(JSON.parse(cachedStats));
-      setSchedules(JSON.parse(cachedSchedules));
+  const fetchDashboardData = async () => {
+    if (!user || !user.id) return; // Siguraduhing may user ID bago mag-fetch
+    
+    setIsRetrying(true);
+    const cachedSchedules = localStorage.getItem(`sms_teacher_schedules_${user.id}`);
+
+    if (cachedSchedules && !isRetrying) {
+      const parsedSchedules = JSON.parse(cachedSchedules);
+      setSchedules(parsedSchedules);
+      // Pansamantalang dynamic stats base sa bilang ng subjects
+      setStats({ classes: parsedSchedules.length, students: parsedSchedules.length * 30, pendingGrading: 0 });
       setIsLoading(false); 
     }
 
     try {
-      const response = await fetch('http://localhost/sms_backend/api/get_teacher_dashboard.php?teacher_id=1');
-      if (!response.ok) throw new Error('Server error');
+      // <-- NA-UPDATE: Gamitin ang totoong API na ginawa natin kanina
+      const response = await axios.get(`${API_BASE_URL}/teacher/get_my_schedule.php?teacher_id=${user.id}`);
       
-      const data = await response.json();
-      setStats(data.stats);
-      setSchedules(data.schedules);
-      
-      localStorage.setItem('sms_teacher_stats', JSON.stringify(data.stats));
-      localStorage.setItem('sms_teacher_schedules', JSON.stringify(data.schedules));
-      setIsServerOffline(false); 
+      if (response.data.status === 'success') {
+        const data = response.data.data;
+        setSchedules(data);
+        
+        // Compute stats dynamically based on fetched schedule
+        const newStats = {
+           classes: data.length,
+           students: data.length * 30, // Estimasyon lang muna, pwedeng gawan ng sariling API query later
+           pendingGrading: 0
+        };
+        setStats(newStats);
+        
+        localStorage.setItem(`sms_teacher_schedules_${user.id}`, JSON.stringify(data));
+        setIsServerOffline(false); 
+      } else {
+        throw new Error(response.data.message || 'Error fetching schedule');
+      }
       
     } catch (error) {
+      console.error(error);
       setIsServerOffline(true);
-      if (!cachedStats || !cachedSchedules) {
-        setStats({ classes: 4, students: 120, pendingGrading: 8 });
-        setSchedules([
-          { id: 1, subject: 'Math 101 - Advanced Algebra', time: '08:00 AM - 09:30 AM', room: 'Room A' },
-          { id: 2, subject: 'Science 202 - Biology', time: '10:00 AM - 11:30 AM', room: 'Lab 1' },
-          { id: 3, subject: 'Programming 1 (Java)', time: '01:00 PM - 03:00 PM', room: 'ComLab 2' },
-          { id: 4, subject: 'Networking 101', time: '03:30 PM - 05:00 PM', room: 'ComLab 1' },
-          { id: 5, subject: 'Database Systems', time: '05:00 PM - 06:30 PM', room: 'ComLab 3' },
-          { id: 6, subject: 'Web Dev 2', time: '07:00 PM - 08:30 PM', room: 'ComLab 1' }
-        ]);
+      if (!cachedSchedules) {
+        setSchedules([]); // Wag mag-display ng fake data kung walang cached para iwas confusion
       }
     } finally {
       setIsLoading(false);
@@ -55,16 +67,16 @@ const TeacherDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [user]); // Re-run kung magbago ang user (halimbawa, kakalogin lang)
 
   const statCards = [
     { icon: <BookOpen size={18}/>, label: 'My Classes', value: stats.classes, color: 'text-blue-600', bg: 'bg-blue-100/60' },
-    { icon: <Users size={18}/>, label: 'Total Students', value: stats.students, color: 'text-emerald-600', bg: 'bg-emerald-100/60' },
-    { icon: <Clock size={18}/>, label: 'Next Class', value: '10:30 AM', color: 'text-orange-600', bg: 'bg-orange-100/60' },
+    { icon: <Users size={18}/>, label: 'Est. Students', value: stats.students, color: 'text-emerald-600', bg: 'bg-emerald-100/60' },
+    { icon: <Clock size={18}/>, label: 'Next Class', value: schedules.length > 0 ? schedules[0].schedule.split(' ')[0] : '--', color: 'text-orange-600', bg: 'bg-orange-100/60' },
     { icon: <AlertCircle size={18}/>, label: 'Pending Grades', value: stats.pendingGrading, color: 'text-red-600', bg: 'bg-red-100/60' },
   ];
 
-  if (isLoading && !stats.classes) {
+  if (isLoading && schedules.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[60vh] bg-transparent">
         <div className="flex flex-col items-center space-y-3">
@@ -76,7 +88,6 @@ const TeacherDashboard = () => {
   }
 
   return (
-    // FIX 1: Elastic height sa mobile, Fixed sa LG (Desktop)
     <div className="w-full flex flex-col bg-transparent lg:h-[calc(100vh-7rem)] lg:-mt-4 lg:overflow-hidden pb-6 lg:pb-0">
       
       <style>{`
@@ -96,14 +107,13 @@ const TeacherDashboard = () => {
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(107, 114, 128, 0.8); }
       `}</style>
 
-      {/* FIX 2: w-full at elastic flex sa mobile */}
       <div className="max-w-7xl mx-auto w-full flex flex-col gap-3 lg:gap-4 lg:h-full">
 
         {/* HEADER */}
         <div className="animate-stagger shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white/40 backdrop-blur-md px-5 py-4 rounded-xl border border-white shadow-sm" style={{ animationDelay: '0ms' }}>
           <div>
             <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">Overview</h2>
-            <p className="text-[11px] text-slate-600 font-medium mt-0.5">Welcome back! Here's your schedule and tasks for today.</p>
+            <p className="text-[11px] text-slate-600 font-medium mt-0.5">Welcome back, <span className="font-bold">{user?.full_name}</span>! Here's your schedule and tasks for today.</p>
           </div>
           <span className="text-[11px] font-bold text-slate-700 bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-sm border border-white/80 shrink-0">
             SY {syStart}-{syEnd} <span className="text-slate-400 mx-1">|</span> {semester}
@@ -135,7 +145,6 @@ const TeacherDashboard = () => {
         {/* ========================================== */}
         {/* SCROLLABLE CONTAINERS AREA */}
         {/* ========================================== */}
-        {/* FIX 3: flex-col sa mobile (para bumaba) at lg:grid sa desktop */}
         <div className="flex-1 flex flex-col lg:grid lg:grid-cols-3 gap-3 md:gap-4 lg:min-h-0">
           
           {/* LEFT SIDE: SCHEDULE SECTION */}
@@ -147,7 +156,7 @@ const TeacherDashboard = () => {
             <div className="px-5 py-3.5 border-b border-white/60 bg-white/20 flex items-center justify-between shrink-0">
               <div className="flex items-center space-x-2">
                 <Clock className="w-4 h-4 text-indigo-600" />
-                <h3 className="text-sm font-bold text-slate-800">Today's Schedule</h3>
+                <h3 className="text-sm font-bold text-slate-800">Your Assigned Classes</h3>
               </div>
               <span className="text-[9px] font-bold bg-white/60 text-slate-700 px-2.5 py-1 rounded-md shadow-sm border border-white uppercase tracking-wider">
                 {schedules.length} Classes
@@ -157,8 +166,8 @@ const TeacherDashboard = () => {
             {/* TABLE HEADERS - Naka-hide sa Mobile, lalabas lang sa Tablet/Desktop */}
             <div className="px-5 py-2.5 bg-white/40 border-b border-white/60 shrink-0 hidden md:block">
               <div className="grid grid-cols-12 gap-2 text-slate-500 text-[9px] font-black uppercase tracking-widest items-center">
-                <div className="col-span-4">Subject</div>
-                <div className="col-span-4">Time</div>
+                <div className="col-span-4">Subject & Section</div>
+                <div className="col-span-4">Schedule</div>
                 <div className="col-span-2">Room</div>
                 <div className="col-span-2 text-right">Action</div>
               </div>
@@ -169,12 +178,16 @@ const TeacherDashboard = () => {
               <div className="flex flex-col space-y-1">
                 {schedules.length > 0 ? (
                   schedules.map(sched => (
-                    // FIX 4: Mobile stacking layout gamit ang grid-cols-1 sa mobile at grid-cols-12 sa md
                     <div key={sched.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-2 items-start md:items-center px-3 py-3 hover:bg-white/50 transition-colors border-b border-white/30 last:border-0 group rounded-lg">
                       
-                      {/* Subject */}
-                      <div className="md:col-span-4 font-bold text-slate-800 text-[12px] md:text-[11px] pr-2">
-                        {sched.subject}
+                      {/* Subject & Section (Dinugtong na yung Section) */}
+                      <div className="md:col-span-4 pr-2">
+                        <div className="font-bold text-slate-800 text-[12px] md:text-[11px] truncate">
+                          {sched.subject_description}
+                        </div>
+                        <div className="text-[9px] font-bold text-slate-500 uppercase mt-0.5">
+                          {sched.grade_level} - {sched.section}
+                        </div>
                       </div>
                       
                       {/* Time */}
@@ -182,15 +195,14 @@ const TeacherDashboard = () => {
                         <div className="p-1 bg-indigo-100/50 rounded text-indigo-500 shrink-0">
                           <Clock size={10} />
                         </div>
-                        <span>{sched.time}</span>
+                        <span>{sched.schedule}</span>
                       </div>
                       
-                      {/* Wrapper sa mobile para magkatabi ang Room at Action */}
                       <div className="flex items-center justify-between mt-2 md:mt-0 md:contents">
                         {/* Room */}
                         <div className="md:col-span-2">
-                          <span className="bg-white/80 text-slate-700 px-2 py-1 rounded-md text-[9px] font-bold border border-white shadow-sm">
-                            {sched.room}
+                          <span className="bg-white/80 text-slate-700 px-2 py-1 rounded-md text-[9px] font-bold border border-white shadow-sm truncate inline-block max-w-full">
+                            {sched.room || 'TBA'}
                           </span>
                         </div>
                         
@@ -207,15 +219,15 @@ const TeacherDashboard = () => {
                 ) : (
                   <div className="py-12 flex flex-col items-center justify-center text-slate-500 h-full">
                     <BookOpen className="w-8 h-8 text-slate-400 mb-2 opacity-50" />
-                    <p className="text-xs font-semibold">No classes scheduled.</p>
+                    <p className="text-xs font-semibold">No classes assigned to you yet.</p>
+                    <p className="text-[10px] text-slate-400 mt-1 text-center">Contact the registrar if you think this is a mistake.</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* RIGHT SIDE: REMINDERS */}
-          {/* FIX 5: min-h-[350px] para maganda ang height sa mobile */}
+          {/* RIGHT SIDE: REMINDERS (Retained for UI look, can be integrated with tasks table later) */}
           <div 
             className="animate-stagger lg:col-span-1 bg-white/40 backdrop-blur-md border border-white shadow-sm rounded-xl flex flex-col min-h-[350px] lg:min-h-0 lg:h-full overflow-hidden"
             style={{ animationDelay: '300ms' }}

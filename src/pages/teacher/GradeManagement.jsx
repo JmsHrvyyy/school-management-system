@@ -1,113 +1,145 @@
-  import React, { useState, useEffect, useCallback } from 'react';
-  import { 
-    Save, ArrowLeft, CheckCircle, Calculator, WifiOff 
-  } from 'lucide-react';
-  import { useParams, useNavigate } from 'react-router-dom';
-  import axios from 'axios';
-  import { useAuth } from '../../context/AuthContext';
-  import OfflineBanner from '../../utils/offlinebanner'; // <-- IMPORT NG REUSABLE BANNER
+import React, { useState, useEffect, useCallback } from 'react';
+import { Save, ArrowLeft, CheckCircle, Calculator } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
+import OfflineBanner from '../../utils/offlinebanner';
 
-  const GradeManagement = () => {
-    const { classId } = useParams();
-    const { user } = useAuth();
-    const navigate = useNavigate();
+const GradeManagement = () => {
+  const { classId } = useParams();
+  const { user, token } = useAuth(); // <-- ARCHITECTURE FIX: Kinuha ang token
+  const navigate = useNavigate();
+  
+  const [students, setStudents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isServerOffline, setIsServerOffline] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [statusMsg, setStatusMsg] = useState(null);
+
+  // ARCHITECTURE FIX: Use Environment Variable
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost/sms-api";
+
+  const getTeacherLevel = () => {
+    const role = user?.role?.toLowerCase() || '';
+    if (role.includes('elementary') || role.includes('highschool')) return 'K12';
+    if (role.includes('college')) return 'COLLEGE';
+    return 'K12'; 
+  };
+
+  const teacherLevel = getTeacherLevel();
+
+  const fetchGrades = useCallback(async (isInitialLoad = false) => {
+    if (isInitialLoad) setIsLoading(true);
+    setIsRetrying(true);
     
-    const [students, setStudents] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    const [isServerOffline, setIsServerOffline] = useState(false);
-    const [isRetrying, setIsRetrying] = useState(false); // <-- PARA SA RETRY ANIMATION
-    const [statusMsg, setStatusMsg] = useState(null);
-
-    const API_BASE_URL = "http://localhost/sms-api";
-
-    const getTeacherLevel = () => {
-      const role = user?.role?.toLowerCase() || '';
-      if (role.includes('elementary') || role.includes('highschool')) return 'K12';
-      if (role.includes('college')) return 'COLLEGE';
-      return 'K12'; 
-    };
-
-    const teacherLevel = getTeacherLevel();
-
-    // INAYOS NA FETCH FUNCTION PARA SUPPORTED ANG SILENT RETRY
-    const fetchGrades = useCallback(async (isInitialLoad = false) => {
-      if (isInitialLoad) setIsLoading(true);
-      setIsRetrying(true);
-      
-      try {
-        const res = await axios.get(`${API_BASE_URL}/get_class_grades.php?class_id=${classId}`);
-        if (res.data) {
-          setStudents(res.data);
-          setIsServerOffline(false);
+    try {
+      // ARCHITECTURE FIX: Secured Axios GET Request
+      const res = await axios.get(`${API_BASE_URL}/teacher/get_class_grades.php`, {
+        params: { class_id: classId },
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-      } catch (error) {
-        setIsServerOffline(true);
-        // DUMMY DATA SKELETON
-        const dummyData = teacherLevel === 'K12' ? [
-          { id: 101, name: "Juan Dela Cruz", written: 0, performance: 0, exam: 0 },
-          { id: 102, name: "Maria Clara", written: 0, performance: 0, exam: 0 },
-        ] : [
-          { id: 201, name: "Jose Rizal", prelim: 0, midterm: 0, finals: 0 },
-          { id: 202, name: "Andres Bonifacio", prelim: 0, midterm: 0, finals: 0 },
-        ];
-        setStudents(dummyData);
-      } finally {
-        if (isInitialLoad) setIsLoading(false);
-        setTimeout(() => setIsRetrying(false), 800);
+      });
+      
+      const data = res.data.data ? res.data.data : res.data;
+      
+      if (data) {
+        setStudents(data);
+        setIsServerOffline(false);
       }
-    }, [classId, teacherLevel]);
-
-    useEffect(() => {
-      if (user) {
-        fetchGrades(true); // true = Initial load, ipapakita ang malaking loading spinner
-      }
-    }, [user, fetchGrades]);
-
-    const handleInputChange = (id, field, value) => {
-      setStudents(prev => prev.map(s => 
-        s.id === id ? { ...s, [field]: parseFloat(value) || 0 } : s
-      ));
-    };
-
-    const calculateFinal = (student) => {
-      if (teacherLevel === 'K12') {
-        const total = (student.written * 0.30) + (student.performance * 0.50) + (student.exam * 0.20);
-        return Math.round(total);
-      } else {
-        const avg = (student.prelim + student.midterm + student.finals) / 3;
-        return avg.toFixed(2);
-      }
-    };
-
-    const getStatus = (grade) => {
-      if (teacherLevel === 'K12') return grade >= 75 ? 'Passed' : 'Failed';
-      return grade <= 3.0 && grade > 0 ? 'Passed' : 'Failed';
-    };
-
-    const saveAllGrades = async () => {
-      setIsSaving(true);
-      try {
-        // await axios.post(`${API_BASE_URL}/save_grades.php`, { classId, students });
-        setStatusMsg({ type: 'success', text: 'Grades synced to database!' });
-      } catch (err) {
-        setStatusMsg({ type: 'error', text: 'Connection failed. Saved locally.' });
-      } finally {
-        setIsSaving(false);
-        setTimeout(() => setStatusMsg(null), 3000);
-      }
-    };
-
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center min-h-[60vh] bg-transparent">
-          <div className="flex flex-col items-center space-y-3">
-            <div className="w-8 h-8 border-4 border-white/40 border-t-indigo-600 rounded-full animate-spin shadow-md"></div>
-            <div className="text-sm font-bold text-indigo-600">Loading Gradebook...</div>
-          </div>
-        </div>
-      );
+    } catch (error) {
+      console.error("Fetch grades error:", error);
+      setIsServerOffline(true);
+      
+      // Fallback Dummy Data (Skeleton)
+      const dummyData = teacherLevel === 'K12' ? [
+        { id: 101, student_id: 'S-2024-001', name: "Juan Dela Cruz", written: 0, performance: 0, exam: 0 },
+        { id: 102, student_id: 'S-2024-002', name: "Maria Clara", written: 0, performance: 0, exam: 0 },
+      ] : [
+        { id: 201, student_id: 'C-2024-001', name: "Jose Rizal", prelim: 0, midterm: 0, finals: 0 },
+      ];
+      setStudents(dummyData);
+    } finally {
+      if (isInitialLoad) setIsLoading(false);
+      setTimeout(() => setIsRetrying(false), 800);
     }
+  }, [classId, teacherLevel, API_BASE_URL, token]);
+
+  useEffect(() => {
+    if (user && token) {
+      fetchGrades(true); 
+    }
+  }, [user, token, fetchGrades]);
+
+  const handleInputChange = (id, field, value) => {
+    setStudents(prev => prev.map(s => 
+      s.id === id ? { ...s, [field]: parseFloat(value) || 0 } : s
+    ));
+  };
+
+  const calculateFinal = (student) => {
+    if (teacherLevel === 'K12') {
+      const total = (student.written * 0.30) + (student.performance * 0.50) + (student.exam * 0.20);
+      return Math.round(total);
+    } else {
+      const avg = (student.prelim + student.midterm + student.finals) / 3;
+      return avg.toFixed(2);
+    }
+  };
+
+  const getStatus = (grade) => {
+    if (teacherLevel === 'K12') return grade >= 75 ? 'Passed' : 'Failed';
+    return grade <= 3.0 && grade > 0 ? 'Passed' : 'Failed';
+  };
+
+  const saveAllGrades = async () => {
+    setIsSaving(true);
+    try {
+      // ARCHITECTURE FIX: Secured Axios POST Request
+      const payload = {
+        class_id: classId,
+        teacher_level: teacherLevel,
+        students: students.map(s => ({
+          ...s,
+          final_grade: calculateFinal(s),
+          remarks: getStatus(calculateFinal(s))
+        }))
+      };
+
+      const res = await axios.post(`${API_BASE_URL}/teacher/save_grades.php`, payload, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if(res.data.status === 'success') {
+        setStatusMsg({ type: 'success', text: 'Grades synced to database!' });
+      } else {
+        throw new Error(res.data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusMsg({ type: 'error', text: 'Connection failed. Check network.' });
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setStatusMsg(null), 3000);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] bg-transparent">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="w-8 h-8 border-4 border-white/40 border-t-indigo-600 rounded-full animate-spin shadow-md"></div>
+          <div className="text-sm font-bold text-indigo-600">Loading Gradebook...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ... (The rest of your UI code remains exactly the same, no need to change the styling)
 
     return (
       <div className="w-full h-full bg-transparent">

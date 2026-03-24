@@ -23,13 +23,17 @@ const AdminLayout = () => {
       { icon: <Users size={20} />, label: 'User Management', path: '/admin/users' },
       { icon: <Settings size={20} />, label: 'Branding Engine', path: '/admin/branding' },
     ],
-    registrar: [
+registrar: [
       { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/registrar/dashboard' },
       { icon: <UserCircle size={20} />, label: 'Student Masterlist', path: '/registrar/students' },
+      // Workflow Group: Academics
       { icon: <Library size={20} />, label: 'Academic Programs', path: '/registrar/programs' }, 
+       
+      { icon: <BookOpen size={20} />, label: 'Subject Management', path: '/registrar/subjects'},
+      { icon: <GraduationCap size={20} />, label: 'Class Assignments', path: '/registrar/assignments' },
+      // Workflow Group: Enrollment & Requests
       { icon: <ClipboardList size={20} />, label: 'Enrollment Module', path: '/registrar/enrollment' },
       { icon: <FileText size={20} />, label: 'Student Requests', path: '/registrar/requests' }, 
-      { icon: <GraduationCap size={20} />, label: 'Class Assignments', path: '/registrar/assignments' },
       { icon: <Award size={20} />, label: 'Scholarship Applications', path: '/registrar/scholarships' },
     ],
     teacher: [

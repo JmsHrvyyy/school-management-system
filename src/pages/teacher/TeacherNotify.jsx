@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Megaphone, Calendar, AlertCircle, Info, FileText, DollarSign, ShieldAlert, WifiOff } from 'lucide-react';
-import OfflineBanner from '../../utils/offlinebanner'; // <-- IMPORT NG REUSABLE BANNER
+import React, { useState, useEffect, useCallback } from 'react';
+import { Megaphone, Calendar, AlertCircle, Info, FileText, DollarSign, ShieldAlert } from 'lucide-react';
+import OfflineBanner from '../../utils/offlinebanner'; 
+import { useAuth } from '../../context/AuthContext'; // <-- ARCHITECTURE FIX: Import auth
 
 const TeacherNotify = () => {
+  const { token } = useAuth(); // <-- ARCHITECTURE FIX: Get secure token
   const [announcements, setAnnouncements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isServerOffline, setIsServerOffline] = useState(false);
-  const [isRetrying, setIsRetrying] = useState(false); // <-- PARA SA RETRY ANIMATION
+  const [isRetrying, setIsRetrying] = useState(false);
 
-  // INILABAS ANG FETCH FUNCTION PARA PWEDENG I-CALL NG RETRY BUTTON
-  const fetchAnnouncements = async () => {
+  // ARCHITECTURE FIX: Use Environment Variable & Standardized Path
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost/sms-api";
+
+  const fetchAnnouncements = useCallback(async () => {
     setIsRetrying(true);
     const cachedAnnouncements = localStorage.getItem('sms_teacher_announcements');
 
@@ -19,61 +23,63 @@ const TeacherNotify = () => {
     }
 
     try {
-      const response = await fetch('http://localhost/sms_backend/api/get_announcements.php');
-      if (!response.ok) throw new Error('Server error');
+      // ARCHITECTURE FIX: Secured Fetch API Call
+      const response = await fetch(`${API_BASE_URL}/teacher/get_announcements.php`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
-      const data = await response.json();
-      setAnnouncements(data);
-      localStorage.setItem('sms_teacher_announcements', JSON.stringify(data));
+      const responseData = await response.json();
+      
+      // I-extract ang data depende kung paano ibinato ng PHP (wrapped in 'data' o hindi)
+      const data = responseData.data ? responseData.data : responseData;
+
+      if (Array.isArray(data) && data.length > 0) {
+        setAnnouncements(data);
+        localStorage.setItem('sms_teacher_announcements', JSON.stringify(data));
+      } else {
+        setAnnouncements([]); // Clear kung talagang walang laman ang database
+      }
+      
       setIsServerOffline(false); 
     } catch (error) {
-      console.error("Connection failed. Showing skeleton data:", error);
+      console.error("Connection failed:", error);
       setIsServerOffline(true); 
 
-      // KUNG WALANG CACHE, MAGPAPAKITA TAYO NG SKELETON DATA
       if (!cachedAnnouncements) {
         setAnnouncements([
-          {
-            id: null, 
-            department: null, 
-            author: null, 
-            date: null,
-            title: null, 
-            content: null, 
-            type: null 
-          }
+          { id: null, department: null, author: null, date: null, title: null, content: null, type: null }
         ]);
       }
     } finally {
       setIsLoading(false); 
-      setTimeout(() => setIsRetrying(false), 800); // Fake delay for smooth UI transition
+      setTimeout(() => setIsRetrying(false), 800);
     }
-  };
+  }, [token, API_BASE_URL, isRetrying]);
 
   useEffect(() => {
     fetchAnnouncements();
-  }, []);
+  }, [fetchAnnouncements]);
 
-  // IN-ADJUST PARA BUMAGAY SA GLASSMORPHISM (Translucent Backgrounds & White Borders)
+  // UI Helpers (No changes here, great logic!)
   const getDepartmentStyle = (department) => {
     switch (department) {
-      case 'Registrar':
-        return { color: 'text-emerald-700', bg: 'bg-emerald-100/60', border: 'border-white/60', icon: <FileText size={16} /> };
-      case 'Cashier':
-        return { color: 'text-orange-700', bg: 'bg-orange-100/60', border: 'border-white/60', icon: <DollarSign size={16} /> };
-      case 'Admin':
-        return { color: 'text-blue-700', bg: 'bg-blue-100/60', border: 'border-white/60', icon: <ShieldAlert size={16} /> };
-      default:
-        return { color: 'text-slate-700', bg: 'bg-white/40', border: 'border-white/60', icon: <Megaphone size={16} /> };
+      case 'Registrar': return { color: 'text-emerald-700', bg: 'bg-emerald-100/60', border: 'border-white/60', icon: <FileText size={16} /> };
+      case 'Cashier': return { color: 'text-orange-700', bg: 'bg-orange-100/60', border: 'border-white/60', icon: <DollarSign size={16} /> };
+      case 'Admin': return { color: 'text-blue-700', bg: 'bg-blue-100/60', border: 'border-white/60', icon: <ShieldAlert size={16} /> };
+      default: return { color: 'text-slate-700', bg: 'bg-white/40', border: 'border-white/60', icon: <Megaphone size={16} /> };
     }
   };
 
-  // IN-ADJUST PARA BUMAGAY SA GLASSMORPHISM
   const getPriorityBadge = (type) => {
     if (type === 'urgent') return <span className="bg-red-100/80 text-red-700 border border-white px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1"><AlertCircle size={10}/> Urgent</span>;
     if (type === 'warning') return <span className="bg-amber-100/80 text-amber-700 border border-white px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">Notice</span>;
     if (type === 'info') return <span className="bg-blue-100/80 text-blue-700 border border-white px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">Info</span>;
-    
     return <span className="bg-white/60 text-slate-500 border border-white px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">No Type</span>;
   };
 
@@ -89,10 +95,9 @@ const TeacherNotify = () => {
   }
 
   return (
-    // ROOT CONTAINER - TINANGGAL ANG DOUBLE PADDING DITO
     <div className="w-full h-full bg-transparent">
       
-      {/* GPU-OPTIMIZED CSS ANIMATION */}
+      {/* Reminder: Move this to global CSS when optimizing for production */}
       <style>{`
         @keyframes fadeInUpGPU {
           from { opacity: 0; transform: translate3d(0, 15px, 0); }
@@ -105,15 +110,10 @@ const TeacherNotify = () => {
         }
       `}</style>
 
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-4xl mx-auto space-y-4 pb-10">
         
-        {/* ========================================== */}
-        {/* HEADER SECTION - COMPACT GLASSMORPHISM */}
-        {/* ========================================== */}
-        <div 
-          className="animate-stagger flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white/40 backdrop-blur-md px-5 py-4 rounded-xl border border-white shadow-sm"
-          style={{ animationDelay: '0ms' }}
-        >
+        {/* HEADER */}
+        <div className="animate-stagger flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white/40 backdrop-blur-md px-5 py-4 rounded-xl border border-white shadow-sm" style={{ animationDelay: '0ms' }}>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-600 text-white rounded-lg shadow-sm shadow-indigo-500/20">
               <Megaphone size={20} />
@@ -125,18 +125,10 @@ const TeacherNotify = () => {
           </div>
         </div>
 
-        {/* ========================================== */}
-        {/* REUSABLE OFFLINE BANNER */}
-        {/* ========================================== */}
-        <OfflineBanner 
-          isServerOffline={isServerOffline} 
-          isRetrying={isRetrying} 
-          onRetry={fetchAnnouncements} // FIX: Pinasa ang function para sa Retry
-        />
+        {/* OFFLINE BANNER */}
+        <OfflineBanner isServerOffline={isServerOffline} isRetrying={isRetrying} onRetry={fetchAnnouncements} />
 
-        {/* ========================================== */}
-        {/* ANNOUNCEMENTS LIST */}
-        {/* ========================================== */}
+        {/* LIST */}
         <div className="space-y-4">
           {announcements.map((news, index) => {
             const deptStyle = getDepartmentStyle(news.department);
@@ -147,7 +139,6 @@ const TeacherNotify = () => {
                 className="animate-stagger bg-white/40 backdrop-blur-md rounded-xl shadow-sm border border-white overflow-hidden hover:bg-white/60 hover:-translate-y-0.5 transition-all duration-300 transform-gpu group"
                 style={{ animationDelay: `${100 + (index * 50)}ms` }}
               >
-                {/* Card Header (Glassmorphism adjusted) */}
                 <div className={`px-5 py-2.5 flex flex-wrap justify-between items-center gap-2 border-b backdrop-blur-sm ${deptStyle.bg} ${deptStyle.border}`}>
                   <div className="flex items-center space-x-2">
                     <span className={`${deptStyle.color} bg-white/50 p-1.5 rounded-md border border-white/50 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
@@ -160,35 +151,36 @@ const TeacherNotify = () => {
                   {getPriorityBadge(news.type)}
                 </div>
 
-                {/* Card Body */}
                 <div className="p-5">
                   <h3 className={`text-base font-extrabold mb-2 leading-tight tracking-tight ${news.title ? 'text-slate-800' : 'text-slate-400 italic'}`}>
-                    {news.title || 'Title missing in database'}
+                    {news.title || 'Title missing'}
                   </h3>
                   <p className={`text-[11px] leading-relaxed mb-4 break-words ${news.content ? 'text-slate-600' : 'text-slate-400 italic'}`}>
-                    {news.content || 'Content missing in database. Please add a description for this announcement.'}
+                    {news.content || 'Content missing.'}
                   </p>
                   
-                  {/* Card Footer */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3 text-[10px] text-slate-500 font-bold border-t border-white/50 pt-3">
                     <div className="flex items-center">
                       <Info size={12} className="mr-1.5 text-indigo-400" />
-                      Posted by: <span className={`ml-1 ${news.author ? 'text-slate-700' : 'text-slate-400 italic'}`}>
-                        {news.author || 'Author (NULL)'}
-                      </span>
+                      Posted by: <span className={`ml-1 ${news.author ? 'text-slate-700' : 'text-slate-400 italic'}`}>{news.author || 'Unknown'}</span>
                     </div>
                     <div className="hidden sm:block text-slate-300">•</div>
                     <div className="flex items-center">
                       <Calendar size={12} className="mr-1.5 text-indigo-400" />
-                      <span className={news.date ? 'text-slate-700' : 'text-slate-400 italic'}>
-                        {news.date || 'Date (NULL)'}
-                      </span>
+                      <span className={news.date ? 'text-slate-700' : 'text-slate-400 italic'}>{news.date || 'No date'}</span>
                     </div>
                   </div>
                 </div>
               </div>
             );
           })}
+          
+          {/* EMPTY STATE */}
+          {!isLoading && announcements.length === 0 && !isServerOffline && (
+            <div className="text-center py-10 bg-white/40 backdrop-blur-md rounded-xl border border-white shadow-sm">
+               <p className="text-sm font-bold text-slate-500">No new announcements at this time.</p>
+            </div>
+          )}
         </div>
 
       </div>
