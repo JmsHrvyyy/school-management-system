@@ -14,7 +14,8 @@ const SectionManagement = () => {
   // Dropdown Options
   const gradeLevels = [
     "Kinder", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
-    "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "College"
+    "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", 
+    "1st Year", "2nd Year", "3rd Year", "4th Year"
   ];
 
   const [formData, setFormData] = useState({
@@ -40,9 +41,12 @@ const SectionManagement = () => {
 
   const handleLevelChange = (level) => {
     let dept = 'K-10';
-    if (level === 'Grade 11' || level === 'Grade 12') dept = 'SHS';
-    if (level === 'College') dept = 'College';
+    // Kung Grade 11 or 12 = SHS
+    if (['Grade 11', 'Grade 12'].includes(level)) dept = 'SHS';
+    // Kung 1st to 4th Year = College
+    if (['1st Year', '2nd Year', '3rd Year', '4th Year'].includes(level)) dept = 'College';
     
+    // I-reset ang program_id tuwing nagpapalit ng level para walang ligaw na data
     setFormData({ ...formData, grade_level: level, department: dept, program_id: '' });
   };
 

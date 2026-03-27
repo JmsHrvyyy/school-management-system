@@ -25,7 +25,7 @@ const ClassAssignments = () => {
   const [assignments, setAssignments] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [subjects, setSubjects] = useState([]);
-  const [sections, setSections] = useState([]); // ARCHITECT FIX: Para sa Dynamic Sections
+  const [sections, setSections] = useState([]); 
   const [editId, setEditId] = useState(null);
   
   // Schedule States
@@ -36,7 +36,7 @@ const ClassAssignments = () => {
   const initialForm = {
     teacher_id: '',
     subject_id: '',
-    section_id: '', // ARCHITECT FIX: Gagamit na tayo ng ID imbes na text
+    section_id: '', 
     grade_level: '', 
     room: '',
     schedule: '',
@@ -44,7 +44,7 @@ const ClassAssignments = () => {
   };
   const [formData, setFormData] = useState(initialForm);
 
-  // --- FETCH DATA (Unified API) ---
+  // --- FETCH DATA ---
   const fetchAssignmentData = async () => {
     setLoading(true);
     try {
@@ -55,7 +55,7 @@ const ClassAssignments = () => {
         setTeachers(res.data.teachers || []);
         setSubjects(res.data.subjects || []);
         setAssignments(res.data.assignments || []);
-        setSections(res.data.sections || []); // Kunin ang mga gawa mong sections
+        setSections(res.data.sections || []); 
       }
     } catch (error) { console.error(error); }
     finally { setLoading(false); }
@@ -109,7 +109,7 @@ const ClassAssignments = () => {
         fetchAssignmentData();
       } else { alert(res.data.message); }
     } catch (error) { alert("Save failed."); }
-    finally { setSaveLoading(true); setSaveLoading(false); }
+    finally { setSaveLoading(false); }
   };
 
   const filteredAssignments = assignments.filter(a => 
@@ -117,7 +117,7 @@ const ClassAssignments = () => {
   );
 
   return (
-    <div className="space-y-6 text-left">
+    <div className="space-y-6 text-left max-w-7xl mx-auto">
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
         <div>
@@ -142,15 +142,17 @@ const ClassAssignments = () => {
         <table className="w-full">
           <thead className="bg-slate-50/50 border-b border-slate-100">
             <tr>
-              <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-10">Teacher & Load</th>
-              <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Target Section</th>
-              <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Schedule & Venue</th>
+              <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-10 text-left">Teacher & Load</th>
+              <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-left">Target Section</th>
+              <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-left">Schedule & Venue</th>
               <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {loading ? (
               <tr><td colSpan="4" className="p-20 text-center text-slate-300 font-black uppercase animate-pulse">Synchronizing Data...</td></tr>
+            ) : filteredAssignments.length === 0 ? (
+              <tr><td colSpan="4" className="p-20 text-center text-slate-300 font-black uppercase">No records found.</td></tr>
             ) : filteredAssignments.map((item) => (
               <tr key={item.id} className="hover:bg-slate-50/50 transition-all group">
                 <td className="p-6 pl-10">
@@ -211,7 +213,7 @@ const ClassAssignments = () => {
             <div className="p-10 space-y-6 overflow-y-auto max-h-[70vh]">
               <div className="grid grid-cols-2 gap-6">
                 
-                {/* TEACHER SELECT */}
+                {/* 1. TEACHER SELECT */}
                 <div className="col-span-2 space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Assign Teacher</label>
                   <select required value={formData.teacher_id} onChange={e=>setFormData({...formData, teacher_id: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500">
@@ -220,12 +222,25 @@ const ClassAssignments = () => {
                   </select>
                 </div>
 
-                {/* SUBJECT SELECT WITH DYNAMIC FILTER */}
-                  <div className="col-span-2 space-y-2">
+                {/* 2. DYNAMIC SECTION SELECT - NILIPAT KO SA TAAS PARA MAUNA */}
+                <div className="col-span-2 space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Target Section</label>
+                  <select required value={formData.section_id} onChange={e=>{
+                    const selected = sections.find(sec => sec.id === parseInt(e.target.value));
+                    // I-reset ang subject_id tuwing nag-iiba ng section
+                    setFormData({...formData, section_id: e.target.value, grade_level: selected?.grade_level || '', subject_id: ''});
+                  }} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500">
+                    <option value="">-- Select Section --</option>
+                    {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.section_name} ({sec.grade_level})</option>)}
+                  </select>
+                </div>
+
+                {/* 3. SUBJECT SELECT WITH STRICT FILTER (ARCHITECT FIX) */}
+                <div className="col-span-2 space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Subject Load</label>
                     <select 
                       required 
-                      disabled={!formData.section_id} // Lock hangga't walang section
+                      disabled={!formData.section_id} 
                       value={formData.subject_id} 
                       onChange={e=>setFormData({...formData, subject_id: e.target.value})} 
                       className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500 disabled:opacity-50"
@@ -234,39 +249,27 @@ const ClassAssignments = () => {
                         {!formData.section_id ? '-- Select Section First --' : '-- Select Eligible Subject --'}
                       </option>
                       
-                          {/* Debugging: This will print in your F12 console to show if subjects are actually loaded */}
-                          {console.log("All Subjects:", subjects)}
-                          {console.log("Current Section ID:", formData.section_id)}
+                      {subjects.filter(sub => {
+                          const selectedSection = sections.find(sec => sec.id === parseInt(formData.section_id));
+                          if (!selectedSection) return false;
 
-                          {subjects.filter(sub => {
-    const selectedSection = sections.find(sec => sec.id === parseInt(formData.section_id));
-    if (!selectedSection) return false;
+                          const sectionGrade = String(selectedSection.grade_level || "").trim().toLowerCase();
+                          const subjectGrade = String(sub.grade_level_applicable || "").trim().toLowerCase();
 
-    // Kunin ang grade level at department
-    const sectionLevel = (selectedSection.grade_level || "").toString().trim().toLowerCase();
-    
-    // DITO ANG FIX: Siguraduhin natin na may data ang subject field
-    // Gagamit tayo ng fallback para hindi mag-crash
-    const subjectLevel = (sub.grade_level_applicable || "").toString().trim().toLowerCase();
-
-    // Debugging (Para makita mo sa console kung nagma-match sila)
-    if(sectionLevel.includes("grade 6")) {
-        console.log(`Checking Subject: ${sub.subject_code} | Sub Level: ${subjectLevel} | Target: ${sectionLevel}`);
-    }
-
-    // Matching Logic para sa Grade 1-10
-    if (sectionLevel.includes('grade') && !sectionLevel.includes('11') && !sectionLevel.includes('12')) {
-        // Kung ang subject code ay may "6" (katulad ng SCIENCE 6) OR match ang grade level field
-        return subjectLevel === sectionLevel || sub.subject_code.includes(" 6");
-    } 
-    
-    // College/SHS
-    return parseInt(sub.program_id) === parseInt(selectedSection.program_id);
-}).map(s => (
-    <option key={s.id} value={s.id}>
-        {s.subject_code} - {s.subject_description || s.name}
-    </option>
-))}
+                          // K-10 LOGIC: Walang program_id, kaya strict string matching ang gagamitin
+                          if (!selectedSection.program_id) {
+                              return sectionGrade === subjectGrade;
+                          } 
+                          // SHS/COLLEGE LOGIC: May program_id pareho ang section at subject
+                          else {
+                              return parseInt(sub.program_id) === parseInt(selectedSection.program_id) && 
+                                     sectionGrade === subjectGrade;
+                          }
+                      }).map(s => (
+                          <option key={s.id} value={s.id}>
+                              {s.subject_code} - {s.subject_description || s.name}
+                          </option>
+                      ))}
                     </select>
                     
                     {!formData.section_id && (
@@ -274,21 +277,9 @@ const ClassAssignments = () => {
                         <AlertTriangle size={10} className="inline mr-1"/> Please select a target section to filter eligible subjects.
                       </p>
                     )}
-                  </div>
-
-                {/* DYNAMIC SECTION SELECT (ARCHITECT FIX) */}
-                <div className="col-span-1 space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Target Section</label>
-                  <select required value={formData.section_id} onChange={e=>{
-                    const selected = sections.find(sec => sec.id === parseInt(e.target.value));
-                    setFormData({...formData, section_id: e.target.value, grade_level: selected?.grade_level || ''});
-                  }} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500">
-                    <option value="">-- Select Section --</option>
-                    {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.section_name} ({sec.grade_level})</option>)}
-                  </select>
                 </div>
 
-                <div className="col-span-1 space-y-2">
+                <div className="col-span-2 space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Room / Venue</label>
                   <input required type="text" placeholder="e.g. Rm 204" value={formData.room} onChange={e=>setFormData({...formData, room: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500" />
                 </div>
@@ -304,8 +295,8 @@ const ClassAssignments = () => {
                     ))}
                   </div>
                   <div className="flex gap-4">
-                    <input type="time" value={startTime} onChange={(e) => {setStartTime(e.target.value); updateScheduleString(selectedDays, e.target.value, endTime);}} className="flex-1 p-3 bg-white border border-slate-200 rounded-xl font-bold" />
-                    <input type="time" value={endTime} onChange={(e) => {setEndTime(e.target.value); updateScheduleString(selectedDays, startTime, e.target.value);}} className="flex-1 p-3 bg-white border border-slate-200 rounded-xl font-bold" />
+                    <input type="time" value={startTime} onChange={(e) => {setStartTime(e.target.value); updateScheduleString(selectedDays, e.target.value, endTime);}} className="flex-1 p-3 bg-white border border-slate-200 rounded-xl font-bold outline-none focus:border-blue-500" />
+                    <input type="time" value={endTime} onChange={(e) => {setEndTime(e.target.value); updateScheduleString(selectedDays, startTime, e.target.value);}} className="flex-1 p-3 bg-white border border-slate-200 rounded-xl font-bold outline-none focus:border-blue-500" />
                   </div>
                   <div className="p-3 bg-white rounded-xl text-center border-2 border-dashed border-blue-200">
                      <p className="text-xs font-black text-blue-600 uppercase tracking-tighter">Selected: {formData.schedule || 'None'}</p>
@@ -317,8 +308,8 @@ const ClassAssignments = () => {
 
             <div className="p-8 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
               <button type="button" onClick={handleCloseModal} className="px-8 py-4 rounded-2xl font-black text-slate-400 uppercase text-xs tracking-widest hover:bg-slate-200 transition-all">Cancel</button>
-              <button type="submit" className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">
-                Confirm Assignment
+              <button type="submit" disabled={saveLoading} className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all flex items-center gap-2">
+                {saveLoading ? <RefreshCw className="animate-spin" size={16}/> : <CheckCircle size={16}/>} Confirm Assignment
               </button>
             </div>
           </form>
